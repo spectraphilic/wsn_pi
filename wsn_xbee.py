@@ -70,7 +70,7 @@ def xbee_manager(serial, callback, error_callback=None):
 if __name__ == '__main__':
     queue = Queue()
     with Publisher() as publisher:
-        bauds = publisher.config.getint('bauds', 9600)
+        bauds = int(publisher.config.get('bauds', 9600))
         with Serial('/dev/serial0', bauds) as serial:
             with xbee_manager(serial, publisher.xbee_cb, publisher.xbee_cb_error):
                 signal.signal(signal.SIGTERM, sigterm) # Signal sent by Supervisor
