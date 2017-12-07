@@ -57,13 +57,17 @@ class MQ(object):
             pass
 
     def stop(self, signum=None, frame=None):
-        if self.channel:
+        if self.channel is not None:
             self.channel.close()
             self.channel = None
 
-        self.connection.close()
-        if self.started:
-            self.connection.ioloop.start() # Graceful stop
+        if self.connection is not None:
+            self.connection.close()
+            if self.started:
+                self.connection.ioloop.start() # Graceful stop
+                self.started = False
+
+            self.connection = None
 
     def connect(self):
         parameters = pika.ConnectionParameters(host=self.host)
