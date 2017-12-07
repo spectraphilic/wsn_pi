@@ -1,0 +1,6 @@
+[wsn_xbee]
+log_level = debug
+bauds = 115200
+
+[wsn_archive_raw]
+log_level = debug
