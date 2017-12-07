@@ -2,7 +2,6 @@
 import base64
 import contextlib
 from queue import Queue, Empty
-import signal
 import time
 
 from serial import Serial
@@ -55,9 +54,6 @@ class Publisher(MQ):
         self.exception('Publication failed')
 
 
-def sigterm(signum, frame):
-    publisher.stop()
-
 @contextlib.contextmanager
 def xbee_manager(serial, callback, error_callback=None):
     try:
@@ -73,5 +69,4 @@ if __name__ == '__main__':
         bauds = int(publisher.config.get('bauds', 9600))
         with Serial('/dev/serial0', bauds) as serial:
             with xbee_manager(serial, publisher.xbee_cb, publisher.xbee_cb_error):
-                signal.signal(signal.SIGTERM, sigterm) # Signal sent by Supervisor
                 publisher.start()

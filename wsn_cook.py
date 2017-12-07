@@ -1,6 +1,5 @@
 # Standard Library
 import base64
-import signal
 import struct
 
 from mq import MQ
@@ -33,5 +32,4 @@ class Consumer(MQ):
 
 if __name__ == '__main__':
     with Consumer() as consumer:
-        signal.signal(signal.SIGTERM, consumer.stop)
         consumer.start()

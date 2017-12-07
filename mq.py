@@ -2,6 +2,7 @@
 from configparser import RawConfigParser as ConfigParser
 import json
 import logging
+import signal
 import sys
 
 import pika
@@ -47,6 +48,7 @@ class MQ(object):
         self.todo = set()
 
     def start(self):
+        signal.signal(signal.SIGTERM, self.stop)
         self.info('Start. To exit press CTRL+C')
         self.started = True
         try:
@@ -54,7 +56,7 @@ class MQ(object):
         except KeyboardInterrupt:
             pass
 
-    def stop(self):
+    def stop(self, signum=None, frame=None):
         if self.channel:
             self.channel.close()
             self.channel = None

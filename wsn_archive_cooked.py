@@ -2,7 +2,6 @@
 from datetime import date
 import json
 import os
-import signal
 
 from mq import MQ
 
@@ -32,5 +31,4 @@ class Consumer(MQ):
 if __name__ == '__main__':
     datadir = os.path.join(os.getcwd(), 'data', 'cooked')
     with Consumer() as consumer:
-        signal.signal(signal.SIGTERM, consumer.stop)
         consumer.start()
