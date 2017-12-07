@@ -203,7 +203,7 @@ def read_wasp_data(filename, data):
         if src:
             frame, src = parse_frame(src)
             if frame is not None:
-                frame = FrameObj(frame)
+                frame = frameObj(frame)
                 data.append(frame.__dict__)
 
             # read end of frame: \n
