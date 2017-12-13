@@ -4,3 +4,7 @@ bauds = 115200
 
 [wsn_archive_raw]
 log_level = debug
+
+[wsn2_2django]
+url = http://hycamp.org/wsn/api/create/
+token = 

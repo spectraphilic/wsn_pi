@@ -35,12 +35,12 @@ stdout_logfile=$PWD/log/wsn_archive_cooked.out.log
 autostart=true
 autorestart=true
 
-; [program:send_to_server]
-; directory=$PWD
-; user=$USER
-; command=$PWD/venv/bin/python send_to_server.py
-; stderr_logfile=$PWD/log/send_to_server.err.log
-; stdout_logfile=$PWD/log/send_to_server.out.log
-; autostart=true
-; autorestart=true
+[program:wsn_2django]
+directory=$PWD
+user=$USER
+command=$PWD/venv/bin/python wsn_2django.py
+stderr_logfile=$PWD/log/wsn_2django.err.log
+stdout_logfile=$PWD/log/wsn_2django.out.log
+autostart=true
+autorestart=true
 EOF
