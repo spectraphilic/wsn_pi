@@ -5,7 +5,7 @@ from mq import MQ
 
 class Consumer(MQ):
 
-    name = 'wsn_2django'
+    name = 'wsn_data_django'
 
     def __init__(self):
         super().__init__()
@@ -13,7 +13,7 @@ class Consumer(MQ):
         self.headers = {'Authorization': 'Token %s' % self.config['token']}
 
     def sub_to(self):
-        return ('wsn_data', 'fanout', 'wsn_2django', self.handle_message)
+        return ('wsn_data', 'fanout', self.name, self.handle_message)
 
     def handle_message(self, body):
         requests.post(self.url, json=body, headers=self.headers)

@@ -1,20 +1,23 @@
 # Standard Library
+import base64
 from datetime import date
 import json
 import os
+import struct
 
 from mq import MQ
 
 class Consumer(MQ):
 
-    name = 'wsn_archive_cooked'
+    name = 'wsn_raw_archive'
 
     def sub_to(self):
-        return ('wsn_data', 'fanout', 'wsn_archive_cooked', self.handle_message)
+        return ('wsn_raw', 'fanout', self.name, self.handle_message)
 
     def handle_message(self, body):
         received = body['received']
-        source_addr = body['source_addr_long']
+        source_addr = base64.b64decode(body['source_addr_long'])
+        source_addr = struct.unpack(">Q", source_addr)
 
         # Create parent directory
         dirpath = os.path.join(datadir, '%016X' % source_addr)
@@ -29,6 +32,6 @@ class Consumer(MQ):
 
 
 if __name__ == '__main__':
-    datadir = os.path.join(os.getcwd(), 'data', 'cooked')
+    datadir = os.path.join(os.getcwd(), 'data', 'raw')
     with Consumer() as consumer:
         consumer.start()

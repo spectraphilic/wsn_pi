@@ -7,10 +7,10 @@ from parse_frame import parse_frame
 
 class Consumer(MQ):
 
-    name = 'wsn_cook'
+    name = 'wsn_raw_cook'
 
     def sub_to(self):
-        return ('wsn_raw', 'fanout', 'wsn_raw_cook', self.handle_message)
+        return ('wsn_raw', 'fanout', self.name, self.handle_message)
 
     def pub_to(self):
         return ('wsn_data', 'fanout', '')
