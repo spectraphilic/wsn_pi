@@ -2,7 +2,7 @@
 log_level = debug
 bauds = 115200
 
-[wsn_archive_raw]
+[wsn_raw_archive]
 log_level = debug
 
 [wsn_data_django]
