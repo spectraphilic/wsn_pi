@@ -39,6 +39,7 @@ SENSORS = {
     201: (b'SDI12_DS2_1', FLOAT, ['ds2_speed', 'ds2_dir', 'ds2_temp']),
     202: (b'SDI12_DS2_2', FLOAT, ['ds2_meridional', 'ds2_zonal', 'ds2_gust']),
     203: (b'DS1820', FLOAT, ['ds1820']),
+    204: (b'MB73XX', ULONG, ['mb_median', 'mb_sd']),
 }
 
 SENSORS_STR = {v[0]: v for k, v in SENSORS.items()}
