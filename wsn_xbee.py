@@ -17,7 +17,6 @@ class Publisher(MQ):
         return ('wsn_raw', 'fanout', '')
 
     def bg_task(self):
-        # {'source_addr_long': '\x00\x13\xa2\x00Aj\x07#', 'rf_data': "<=>\x06\x1eb'g\x05|\x10T\x13#\xc3{\xa8\n\xf3Y4b\xc8\x00\x00PA33\xabA\x00\x00\x00\x00", 'source_addr': '\xff\xfe', 'id': 'rx', 'options': '\xc2'}
         while True:
             try:
                 frame = queue.get_nowait()
@@ -26,10 +25,8 @@ class Publisher(MQ):
 
             t0 = time.time()
             self.debug('FRAME %s', frame)
-            if frame['id'] != 'rx':
-                self.warning('UNEXPECTED ID %s', frame['id'])
-                continue
 
+            # Encode
             for k in frame.keys():
                 if k != 'id':
                     frame[k] = base64.b64encode(frame[k]).decode()
