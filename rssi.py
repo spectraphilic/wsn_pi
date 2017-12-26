@@ -15,6 +15,10 @@ import time
 from serial import Serial
 from xbee import XBee
 
+# Constants
+BAUDS = 9600
+#BAUDS = 115200
+
 # Xbee addresses
 BROADCAST = b'\x00\x00\x00\x00\x00\x00\xff\xff'
 CS_PI  = b'\x00\x13\xa2\x00\x41\x25\x39\xd3'
@@ -25,7 +29,6 @@ CS = [CS_V12, CS_V15]
 FINSE = [
     5526146532103365,
     5526146532103350,
-    5526146532103365,
     5526146534160844,
 ]
 FINSE = [struct.pack(">Q", x) for x in FINSE]
@@ -94,7 +97,7 @@ def cron():
 
 
 if __name__ == '__main__':
-    serial = Serial('/dev/serial0', 115200)
+    serial = Serial('/dev/serial0', BAUDS)
     xbee = XBee(serial)
 
     cron()
