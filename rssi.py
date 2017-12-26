@@ -71,19 +71,20 @@ def retry(address, command='DB'):
     return frame
 
 
-def cron(address, command='DB'):
+def cron():
     second = 4
     now = datetime.now()
     if now.second < second:
         time.sleep(second - now.second)
 
-    return send(address, command)
+    for address in [V12]:
+        send(address, 'DB')
 
 
 if __name__ == '__main__':
     serial = Serial('/dev/serial0', 115200)
     xbee = XBee(serial)
 
-    cron(V15)
+    cron()
     #send(V15)
     #print(xbee.wait_read_frame())
