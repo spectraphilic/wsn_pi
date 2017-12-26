@@ -9,6 +9,7 @@ https://cdn.sparkfun.com/learn/materials/29/22AT%20Commands.pdf
 
 # Standard Library
 from datetime import datetime
+import struct
 import time
 
 from serial import Serial
@@ -16,15 +17,24 @@ from xbee import XBee
 
 # Xbee addresses
 BROADCAST = b'\x00\x00\x00\x00\x00\x00\xff\xff'
-PI  = b'\x00\x13\xa2\x00\x41\x25\x39\xd3'
-V12 = b'\x00\x13\xa2\x00A%9m'
-V15 = b'\x00\x13\xa2\x00A\x05\xd8\xcf'
+CS_PI  = b'\x00\x13\xa2\x00\x41\x25\x39\xd3'
+CS_V12 = b'\x00\x13\xa2\x00A%9m'
+CS_V15 = b'\x00\x13\xa2\x00A\x05\xd8\xcf'
+CS = [CS_V12, CS_V15]
+
+FINSE = [
+    5526146532103365,
+    5526146532103350,
+    5526146532103365,
+    5526146534160844,
+]
+FINSE = [struct.pack(">Q", x) for x in FINSE]
 
 
 def test_simple():
     xbee.at(command="DB", frame_id="\x01") # Pi
-    xbee.remote_at(command="DB", frame_id="\x01", dest_addr_long=V12)
-    xbee.remote_at(command="DB", frame_id="\x01", dest_addr_long=V15)
+    xbee.remote_at(command="DB", frame_id="\x01", dest_addr_long=CS_V12)
+    xbee.remote_at(command="DB", frame_id="\x01", dest_addr_long=CS_V15)
 
     # Broadcast
     xbee.remote_at(command="DB", frame_id="\x01")
@@ -77,7 +87,9 @@ def cron():
     if now.second < second:
         time.sleep(second - now.second)
 
-    for address in [V12]:
+    addresses = FINSE
+    #addresses = CS
+    for address in addresses:
         send(address, 'DB')
 
 
@@ -86,5 +98,5 @@ if __name__ == '__main__':
     xbee = XBee(serial)
 
     cron()
-    #send(V15)
+    #send(CS_V15)
     #print(xbee.wait_read_frame())
