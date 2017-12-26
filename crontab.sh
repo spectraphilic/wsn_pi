@@ -1,3 +1,3 @@
 cat << EOF
-* * * * * $PWD/venv/bin/python rssi.py
+* * * * * $PWD/venv/bin/python $PWD/rssi.py
 EOF
