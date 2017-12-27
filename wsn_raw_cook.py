@@ -1,11 +1,21 @@
 # Standard Library
 import base64
+import copy
+import json
 import struct
+import time
 
-from mq import MQ
-from parse_frame import parse_frame
+from serial import Serial
+from xbee import XBee
 
-class Consumer(MQ):
+import mq
+import parse_frame
+import rssi
+
+
+DBNAME = 'var/raw_cook.json'
+
+class Consumer(mq.MQ):
 
     name = 'wsn_raw_cook'
 
@@ -15,6 +25,16 @@ class Consumer(MQ):
     def pub_to(self):
         return ('wsn_data', 'fanout', '')
 
+    def update_db(self, source_addr_long, **kw):
+        assert type(source_addr_long) is int
+        global db
+        db_new = copy.deepcopy(db)
+        db_new.setdefault(source_addr_long, {}).update(kw)
+        if db != db_new:
+            db = db_new
+            with open(DBNAME, 'w') as db_file:
+                json.dump(db, db_file, indent=2)
+
     def handle_rx(self, body):
         """"
         {'source_addr_long': '\x00\x13\xa2\x00Aj\x07#',
@@ -23,11 +43,30 @@ class Consumer(MQ):
          'id': 'rx',
          'options': '\xc2'}
         """
+        source_addr_long = body['source_addr_long']
+
         # Skip source_addr, id and options
-        frame = parse_frame(body['rf_data'])[0]
+        frame = parse_frame.parse_frame(body['rf_data'])[0]
         frame['received'] = body['received']
-        frame['source_addr_long'] = body['source_addr_long']
+        frame['source_addr_long'] = source_addr_long
         self.publish(frame)
+
+        # Ask for rssi
+        threshold = 3300 # 55 min
+        #threshold = 30 # 30s for testing
+        kw = {}
+        tst = int(time.time())
+        if (tst - threshold) > db.get(source_addr_long, {}).get('rssi_tst', 0):
+            kw['rssi_tst'] = tst
+            bauds = int(self.config.get('bauds', 9600))
+            address = struct.pack(">Q", source_addr_long)
+            with Serial('/dev/serial0', bauds) as serial:
+                xbee = XBee(serial)
+                rssi.send(xbee, address)
+            self.info('Asked for rssi')
+
+        # Update db
+        self.update_db(source_addr_long, serial=frame['serial'], **kw)
 
     def handle_remote_at_response(self, body):
         """
@@ -47,11 +86,17 @@ class Consumer(MQ):
             self.warning('UNEXPECTED command %s', body['command'])
             return
 
+        source_addr_long = body['source_addr_long']
+        received = body['received']
         self.publish({
-            'received': body['received'],
-            'source_addr_long': body['source_addr_long'],
+            'received': received,
+            'source_addr_long': source_addr_long,
+            'serial': db.get(source_addr_long, {}).get('serial'),
             'rssi': - struct.unpack('B', body['parameter'])[0],
         })
+
+        # Update db
+        self.update_db(source_addr_long, rssi_tst=received)
 
     def handle_message(self, body):
         # Decode
@@ -77,5 +122,14 @@ class Consumer(MQ):
 
 
 if __name__ == '__main__':
+    try:
+        with open(DBNAME) as db_file:
+            db = json.load(db_file)
+    except FileNotFoundError:
+        db = {}
+    else:
+        # JSON keys are always strings, but we use ints
+        db = {int(key): value for key, value in db.items()}
+
     with Consumer() as consumer:
         consumer.start()

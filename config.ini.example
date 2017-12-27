@@ -1,9 +1,11 @@
+[global]
+bauds = 115200
+log_level = info
+
 [wsn_xbee]
 log_level = debug
-bauds = 115200
 
 [wsn_raw_archive]
-log_level = debug
 
 [wsn_data_django]
 url = http://hycamp.org/wsn/api/create/

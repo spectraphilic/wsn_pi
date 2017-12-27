@@ -44,17 +44,17 @@ def test_simple():
     xbee.remote_at(command="DB", frame_id="\x01", dest_addr_long=BROADCAST)
 
 
-def send(address, command='DB', frame_ids={}):
+def send(xbee, address, command='DB', frame_ids={}):
     frame_id = frame_ids.setdefault(address, 1)
     frame_ids[address] = 1 if (frame_id == 255) else (frame_id + 1) # Next
 
-    frame_id = chr(frame_id).encode()
+    frame_id = bytearray([frame_id])
     xbee.remote_at(command=command, frame_id=frame_id, dest_addr_long=address)
     return frame_id
 
 
 def send_recv(address, command='DB'):
-    frame_id = send(address, command)
+    frame_id = send(xbee, address, command)
     while True:
         frame = xbee.wait_read_frame()
         if frame.get('frame_id') == frame_id:
@@ -69,7 +69,7 @@ def send_recv(address, command='DB'):
 def delay(address, command='DB'):
     seconds = (60 - datetime.now().second) + 4
     time.sleep(seconds)
-    return send(address, command)
+    return send(xbee, address, command)
 
 
 def retry(address, command='DB'):
@@ -93,7 +93,7 @@ def cron():
     addresses = FINSE
     #addresses = CS
     for address in addresses:
-        send(address, 'DB')
+        send(xbee, address, 'DB')
 
 
 if __name__ == '__main__':

@@ -39,10 +39,12 @@ class MQ(object):
         # Read configuration
         config = ConfigParser()
         config.read('config.ini')
-        try:
-            self.config = config[self.name]
-        except KeyError:
-            self.config = {}
+        self.config = {}
+        for section in ['global', self.name]:
+            try:
+                self.config.update(dict(config[section]))
+            except KeyError:
+                pass
 
         # Used to know when the setup process is done
         self.todo = set()

@@ -4,6 +4,7 @@
 /data/
 /log/
 /supervisor.conf
+/var/
 /venv/
 
 .*.swp
