@@ -10,7 +10,7 @@ from xbee import XBee
 
 import mq
 import parse_frame
-import utils
+import control
 
 
 DBNAME = 'var/raw_cook.json'
@@ -65,7 +65,7 @@ class Consumer(mq.MQ):
             kw[name] = tst
             with Serial('/dev/serial0', bauds) as serial:
                 xbee = XBee(serial)
-                utils.remote_at(xbee, address, command='DB')
+                control.remote_at(xbee, address, command='DB')
             self.info('Asked for rssi')
 
         # Sync time
@@ -79,7 +79,7 @@ class Consumer(mq.MQ):
             data = 'time %d' % tst
             with Serial('/dev/serial0', bauds) as serial:
                 xbee = XBee(serial)
-                xbee.tx(dest_addr=address, data=data)
+                xbee.tx_long_addr(dest_addr=address, data=data)
             self.info('Sent "time" command')
 
         # Update db
