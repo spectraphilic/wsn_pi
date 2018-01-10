@@ -1,6 +1,5 @@
 /__pycache__/
 /config.ini
-/crontab.txt
 /data/
 /log/
 /supervisor.conf

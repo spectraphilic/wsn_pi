@@ -84,22 +84,9 @@ def retry(address, command='DB'):
     return frame
 
 
-def cron():
-    second = 4
-    now = datetime.now()
-    if now.second < second:
-        time.sleep(second - now.second)
-
-    addresses = FINSE
-    #addresses = CS
-    for address in addresses:
-        send(xbee, address, 'DB')
-
-
 if __name__ == '__main__':
     serial = Serial('/dev/serial0', BAUDS)
     xbee = XBee(serial)
 
-    cron()
     #send(CS_V15)
     #print(xbee.wait_read_frame())

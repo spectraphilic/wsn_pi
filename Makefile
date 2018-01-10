@@ -4,5 +4,3 @@ install:
 	mkdir -p log
 	mkdir -p var
 	bash supervisor.sh > supervisor.conf
-	bash crontab.sh > crontab.txt
-	#crontab crontab.txt

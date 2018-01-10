@@ -10,7 +10,6 @@ Install system wide requirements::
 Build::
 
   $ make install
-  $ crontab crontab.txt
 
 Create a symbolic link, as root, to the supervisor configuration::
 
