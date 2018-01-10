@@ -10,7 +10,7 @@ from xbee import XBee
 
 import mq
 import parse_frame
-import rssi
+import utils
 
 
 DBNAME = 'var/raw_cook.json'
@@ -51,19 +51,36 @@ class Consumer(mq.MQ):
         frame['source_addr_long'] = source_addr_long
         self.publish(frame)
 
-        # Ask for rssi
+        # Sending frames section
+        kw = {}
+        bauds = int(self.config.get('bauds', 9600))
+        address = struct.pack(">Q", source_addr_long)
+        tst = int(time.time())
+
+        # RSSI
+        name = 'rssi_tst'
+        threshold = 3300 # 55 min
+        #threshold = 30 # 30s for testing
+        if (tst - threshold) > db.get(source_addr_long, {}).get(name, 0):
+            kw[name] = tst
+            with Serial('/dev/serial0', bauds) as serial:
+                xbee = XBee(serial)
+                utils.remote_at(xbee, address, command='DB')
+            self.info('Asked for rssi')
+
+        # Sync time
+        name = 'cmd_time'
         threshold = 3300 # 55 min
         #threshold = 30 # 30s for testing
         kw = {}
         tst = int(time.time())
-        if (tst - threshold) > db.get(source_addr_long, {}).get('rssi_tst', 0):
-            kw['rssi_tst'] = tst
-            bauds = int(self.config.get('bauds', 9600))
-            address = struct.pack(">Q", source_addr_long)
+        if (tst - threshold) > db.get(source_addr_long, {}).get(name, 0):
+            kw[name] = tst
+            data = 'time %d' % tst
             with Serial('/dev/serial0', bauds) as serial:
                 xbee = XBee(serial)
-                rssi.send(xbee, address)
-            self.info('Asked for rssi')
+                xbee.tx(dest_addr=address, data=data)
+            self.info('Sent "time" command')
 
         # Update db
         self.update_db(source_addr_long, serial=frame['serial'], **kw)
