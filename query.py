@@ -3,7 +3,7 @@ import os
 import pprint
 import requests
 
-URL = 'http://hycamp.org/wsn/api/query/'
+URL = 'https://hycamp.org/wsn/api/query/'
 #URL = 'http://localhost:8000/wsn/api/query/'
 
 def query(limit=100, offset=0, xbee=None, mote=None, sensor=None,
@@ -42,21 +42,18 @@ def query(limit=100, offset=0, xbee=None, mote=None, sensor=None,
     
 
 if __name__ == '__main__':
-    TOKEN = os.getenv('WSN_TOKEN')
-    if not TOKEN:
-        print("Define the WSN_TOKEN environment variable.")
-    else:
-        response = query(
-            limit=5,
-            mote=161398434909148276,
-            tst__gte=datetime.datetime(2017, 12, 1),
-            debug=True,
-        )
+    TOKEN = os.getenv('WSN_TOKEN', 'dcff0c629050b5492362ec28173fa3e051648cb1')
+    response = query(
+        limit=5,
+        mote=161398434909148276,
+        tst__gte=datetime.datetime(2017, 12, 1),
+        debug=True,
+    )
 
-        response = query(
-            limit=5,
-            xbee=5526146534160749,
-            sensor='rssi',
-            received__gte=datetime.datetime(2017, 12, 1),
-            debug=True,
-        )
+    response = query(
+        limit=5,
+        xbee=5526146534160749,
+        sensor='rssi',
+        received__gte=datetime.datetime(2017, 12, 1),
+        debug=True,
+    )
