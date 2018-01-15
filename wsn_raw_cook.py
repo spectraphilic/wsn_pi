@@ -6,7 +6,7 @@ import struct
 import time
 
 from serial import Serial
-from xbee import XBee
+from xbee import DigiMesh
 
 import mq
 import parse_frame
@@ -64,7 +64,7 @@ class Consumer(mq.MQ):
         if (tst - threshold) > db.get(source_addr_long, {}).get(name, 0):
             kw[name] = tst
             with Serial('/dev/serial0', bauds) as serial:
-                xbee = XBee(serial)
+                xbee = DigiMesh(serial)
                 control.remote_at(xbee, address, command='DB')
             self.info('Asked for rssi')
 
@@ -78,8 +78,8 @@ class Consumer(mq.MQ):
             kw[name] = tst
             data = 'time %d' % tst
             with Serial('/dev/serial0', bauds) as serial:
-                xbee = XBee(serial)
-                xbee.tx_long_addr(dest_addr=address, data=data)
+                xbee = DigiMesh(serial)
+                xbee.tx(dest_addr=address, data=data, frame_id='\x01')
             self.info('Sent "time" command')
 
         # Update db
@@ -96,7 +96,7 @@ class Consumer(mq.MQ):
          'status': b'\x00'}
         """
         if body['status'] != b'\x00':
-            self.warning('REMOTE_AT Response failed', body)
+            self.warning('REMOTE_AT Response failed %s', body)
             return
 
         if body['command'] != b'DB':
