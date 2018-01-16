@@ -59,7 +59,7 @@ class Consumer(mq.MQ):
 
         # RSSI
         name = 'rssi_tst'
-        threshold = 3300 # 55 min
+        threshold = ((1 * 60) - 5) * 60 # 55 minutes
         #threshold = 30 # 30s for testing
         if (tst - threshold) > db.get(source_addr_long, {}).get(name, 0):
             kw[name] = tst
@@ -70,7 +70,7 @@ class Consumer(mq.MQ):
 
         # Sync time
         name = 'cmd_time'
-        threshold = 3300 # 55 min
+        threshold = ((6 * 60) - 5) * 60 # 6hours - 5minutes
         #threshold = 30 # 30s for testing
         kw = {}
         tst = int(time.time())
