@@ -16,7 +16,7 @@ import struct
 import time
 
 from serial import Serial
-from xbee import XBee
+from xbee import DigiMesh
 
 # Constants
 BAUDS = 9600
@@ -93,7 +93,7 @@ def retry(address, command='DB'):
     time.sleep(seconds)
     for i in range(5):
         print('Try %s', datetime.now())
-        frame = send_recv(address, command)
+        frame = remote_at_wait(address, command)
         if frame['status'] == b'\x00':
             break
 
@@ -115,7 +115,7 @@ class Control(Cmd):
 
     def preloop(self):
         self.serial = Serial('/dev/serial0', BAUDS)
-        self.xbee = XBee(self.serial)
+        self.xbee = DigiMesh(self.serial)
 
     def set_address(self, address):
         if address not in ADDRESSES:
@@ -163,7 +163,7 @@ if __name__ == '__main__':
     control.cmdloop()
 
 #   serial = Serial('/dev/serial0', BAUDS)
-#   xbee = XBee(serial)
+#   xbee = DigiMesh(serial)
 
 #   data = 'time %d' % int(time.time())
 #   data = b'hello'

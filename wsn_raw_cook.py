@@ -35,10 +35,10 @@ class Consumer(mq.MQ):
             with open(DBNAME, 'w') as db_file:
                 json.dump(db, db_file, indent=2)
 
-    def handle_rx(self, body):
+    def rx(self, body):
         """"
         {'source_addr_long': '\x00\x13\xa2\x00Aj\x07#',
-         'rf_data': "<=>\x06\x1eb'g\x05|\x10T\x13#\xc3{\xa8\n\xf3Y4b\xc8\x00\x00PA33\xabA\x00\x00\x00\x00",
+         'data': "<=>\x06\x1eb'g\x05|\x10T\x13#\xc3{\xa8\n\xf3Y4b\xc8\x00\x00PA33\xabA\x00\x00\x00\x00",
          'source_addr': '\xff\xfe',
          'id': 'rx',
          'options': '\xc2'}
@@ -46,10 +46,10 @@ class Consumer(mq.MQ):
         source_addr_long = body['source_addr_long']
 
         # Skip source_addr, id and options
-        rf_data = body['rf_data']
-        frame = parse_frame.parse_frame(rf_data)
+        data = body['data']
+        frame = parse_frame.parse_frame(data)
         if frame is None:
-            raise ValueError("Error parsing %s" % base64.b64encode(rf_data))
+            raise ValueError("Error parsing %s" % base64.b64encode(data))
 
         frame = frame[0]
         frame['received'] = body['received']
@@ -77,20 +77,19 @@ class Consumer(mq.MQ):
         name = 'cmd_time'
         threshold = ((6 * 60) - 5) * 60 # 6hours - 5minutes
         #threshold = 30 # 30s for testing
-        kw = {}
-        tst = int(time.time())
         if (tst - threshold) > db.get(source_addr_long, {}).get(name, 0):
             kw[name] = tst
             data = 'time %d' % tst
             with Serial('/dev/serial0', bauds) as serial:
                 xbee = DigiMesh(serial)
+                # TODO autoincrement frame_id like we do with remote-at
                 xbee.tx(dest_addr=address, data=data, frame_id='\x01')
             self.info('Sent "time" command')
 
         # Update db
         self.update_db(source_addr_long, serial=frame['serial'], **kw)
 
-    def handle_remote_at_response(self, body):
+    def remote_at_response(self, body):
         """
         {'command': b'DB',
          'body_id': b'\x06',
@@ -120,20 +119,31 @@ class Consumer(mq.MQ):
         # Update db
         self.update_db(source_addr_long, rssi_tst=received)
 
+    def tx_status(self, body):
+        self.warning('tx_status not implemented') # TODO
+
     def handle_message(self, body):
         # Decode
         for k in body.keys():
             if k not in ('id', 'received'):
                 body[k] = base64.b64decode(body[k])
 
-        source_addr_long = struct.unpack(">Q", body['source_addr_long'])[0]
-        body['source_addr_long'] = source_addr_long
+        # Decode: source_addr_long
+        source_addr = body.get('source_addr_long')
+        if source_addr is None:
+            source_addr = body.get('source_addr')
+
+        if source_addr is not None:
+            assert len(source_addr) == 8
+            source_addr = struct.unpack(">Q", source_addr)[0]
+            body['source_addr_long'] = source_addr
 
         # Handle
         frame_type = body['id']
         handler = {
-            'rx': self.handle_rx,
-            'remote_at_response': self.handle_remote_at_response,
+            'rx': self.rx,
+            'remote_at_response': self.remote_at_response,
+            'tx_status': self.tx_status,
         }.get(frame_type)
 
         if handler is None:

@@ -5,7 +5,7 @@ from queue import Queue, Empty
 import time
 
 from serial import Serial
-from xbee import XBee
+from xbee import DigiMesh
 
 from mq import MQ
 
@@ -55,7 +55,7 @@ class Publisher(MQ):
 def xbee_manager(serial, callback, error_callback=None):
     try:
         # Starts XBee thread
-        xbee = XBee(serial, callback=callback, error_callback=error_callback)
+        xbee = DigiMesh(serial, callback=callback, error_callback=error_callback)
         yield xbee
     finally:
         xbee.halt() # Stop XBee thread

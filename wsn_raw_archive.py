@@ -14,18 +14,30 @@ class Consumer(MQ):
     def sub_to(self):
         return ('wsn_raw', 'fanout', self.name, self.handle_message)
 
-    def handle_message(self, body):
-        received = body['received']
-        source_addr = base64.b64decode(body['source_addr_long'])
-        source_addr = struct.unpack(">Q", source_addr)
+    def get_dirname(self, body):
+        frame_type = body['id']
 
+        source_addr = body.get('source_addr_long')
+        if source_addr is None:
+            source_addr = body.get('source_addr')
+
+        if source_addr is not None:
+            source_addr = base64.b64decode(source_addr)
+            assert len(source_addr) == 8
+            source_addr = struct.unpack(">Q", source_addr)[0]
+            return '%016X' % source_addr
+
+        return frame_type
+
+    def handle_message(self, body):
         # Create parent directory
-        dirpath = os.path.join(datadir, '%016X' % source_addr)
+        dirname = self.get_dirname(body)
+        dirpath = os.path.join(datadir, dirname)
         os.makedirs(dirpath, exist_ok=True)
 
         # Append
-        received = date.fromtimestamp(received).strftime('%Y%m%d')
-        filepath = os.path.join(dirpath, received)
+        filename = date.fromtimestamp(body['received']).strftime('%Y%m%d')
+        filepath = os.path.join(dirpath, filename)
         with open(filepath, 'a+') as f:
             body = json.dumps(body)
             f.write(body + '\n')
