@@ -46,7 +46,12 @@ class Consumer(mq.MQ):
         source_addr_long = body['source_addr_long']
 
         # Skip source_addr, id and options
-        frame = parse_frame.parse_frame(body['rf_data'])[0]
+        rf_data = body['rf_data']
+        frame = parse_frame.parse_frame(rf_data)
+        if frame is None:
+            raise ValueError("Error parsing %s" % base64.b64encode(rf_data))
+
+        frame = frame[0]
         frame['received'] = body['received']
         frame['source_addr_long'] = source_addr_long
         self.publish(frame)
