@@ -21,7 +21,7 @@ SENSORS = {
      35: (b'HUMB', FLOAT, ['humb']),
      38: (b'LW', FLOAT, ['lw']),
      52: (b'BAT', USHORT, ['bat']),
-#    53: (b'GPS', ),
+     53: (b'GPS', FLOAT, ['latitude', 'longitude']),
      54: (b'RSSI', INT, ['rssi']),
      55: (b'MAC', STR, ['mac']),
      62: (b'IN_TEMP', FLOAT, ['in_temp']),
