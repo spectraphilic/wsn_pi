@@ -91,6 +91,8 @@ class MQ(object):
 
     def on_connect_error(self, connection, exc):
         self.exception('Connection error')
+        self.connection = None
+        sys.exit(1)
 
     def on_connect_close(self, connection, reply_code, reply_text):
         self.info('Connection closed')
