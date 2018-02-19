@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import requests
 
 from mq import MQ
@@ -15,8 +17,26 @@ class Consumer(MQ):
     def sub_to(self):
         return ('wsn_data', 'fanout', self.name, self.handle_message)
 
-    def handle_message(self, body):
-        requests.post(self.url, json=body, headers=self.headers)
+    def handle_message(self, data):
+        # Adapt the data to the structure expected by Django. This could
+        # (should?) be done in the cook program.
+
+        # Tags
+        tags = {}
+        for key in 'source_addr_long', 'serial':
+            value = data.pop(key, None)
+            if value is not None:
+                tags[key] = value
+
+        # Time
+        time = data.pop('tst', None)
+        if time is None:
+            time = data['received']
+        time = datetime.fromtimestamp(time).isoformat()
+
+        json = {'tags': tags, 'frames': [{'time': time, 'data': data}]}
+        response = requests.post(self.url, json=json, headers=self.headers)
+        response.raise_for_status()
 
 
 if __name__ == '__main__':
