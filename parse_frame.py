@@ -14,6 +14,7 @@ INT    = 1 # int16_t
 FLOAT  = 2 # double
 STR    = 3 # char*
 ULONG  = 4 # uint32_t
+LIST_INT = 5 # Array of integers
 
 SENSORS = {
      15: (b'PA', FLOAT, ['pa']),
@@ -38,7 +39,7 @@ SENSORS = {
     200: (b'SDI12_CTD10', FLOAT, ['ctd_depth', 'ctd_temp', 'ctd_cond']),
     201: (b'SDI12_DS2_1', FLOAT, ['ds2_speed', 'ds2_dir', 'ds2_temp']),
     202: (b'SDI12_DS2_2', FLOAT, ['ds2_meridional', 'ds2_zonal', 'ds2_gust']),
-    203: (b'DS1820', FLOAT, ['ds1820']),
+    203: (b'DS1820', LIST_INT, 'ds1820'),
     204: (b'MB73XX', ULONG, ['mb_median', 'mb_sd']),
 }
 
@@ -173,6 +174,22 @@ def parse_frame(line):
                 return None
 
             key, sensor_type, names = sensor
+
+            # Variable list of values (done for the DS18B20 string)
+            if sensor_type == LIST_INT:
+                name = names.lower()
+                values = frame.setdefault(name, [])
+                n_values = struct.unpack_from("B", line)[0]
+                line = line[1:]
+                while n_values:
+                    value = struct.unpack_from("h", line)[0]
+                    line = line[2:]
+                    values.append(value)
+                    n_values -= 1
+
+                continue
+
+            # Fixed number of values
             for name in names:
                 if sensor_type == USHORT:
                     value = struct.unpack_from("B", line)[0]
