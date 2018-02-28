@@ -181,11 +181,18 @@ def parse_frame(line):
                 values = frame.setdefault(name, [])
                 n_values = struct.unpack_from("B", line)[0]
                 line = line[1:]
-                while n_values:
+                for i in range(n_values):
+                    if i > 0:
+                        value = struct.unpack_from("b", line)[0]
+                        line = line[1:]
+                        if value != -128:
+                            value = values[-1] + value
+                            values.append(value)
+                            continue
+
                     value = struct.unpack_from("h", line)[0]
                     line = line[2:]
                     values.append(value)
-                    n_values -= 1
 
                 continue
 
