@@ -36,7 +36,9 @@ class Consumer(MQ):
 
         json = {'tags': tags, 'frames': [{'time': time, 'data': data}]}
         response = requests.post(self.url, json=json, headers=self.headers)
-        response.raise_for_status()
+        status = response.status_code
+        assert status == 201, '{} {}'.format(status, response.json())
+
 
 
 if __name__ == '__main__':
