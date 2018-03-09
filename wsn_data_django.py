@@ -1,4 +1,5 @@
-from datetime import datetime
+# Standard Library
+from datetime import datetime, timezone
 
 import requests
 
@@ -32,7 +33,9 @@ class Consumer(MQ):
         time = data.pop('tst', None)
         if time is None:
             time = data['received']
-        time = datetime.fromtimestamp(time).isoformat()
+
+        time = datetime.utcfromtimestamp(time).replace(tzinfo=timezone.utc)
+        time = time.isoformat()
 
         json = {'tags': tags, 'frames': [{'time': time, 'data': data}]}
         response = requests.post(self.url, json=json, headers=self.headers)
