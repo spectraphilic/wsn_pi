@@ -39,7 +39,7 @@ SENSORS = {
     200: (b'SDI12_CTD10', FLOAT, ['ctd_depth', 'ctd_temp', 'ctd_cond']),
     201: (b'SDI12_DS2_1', FLOAT, ['ds2_speed', 'ds2_dir', 'ds2_temp']),
     202: (b'SDI12_DS2_2', FLOAT, ['ds2_meridional', 'ds2_zonal', 'ds2_gust']),
-    203: (b'DS1820', LIST_INT, 'ds1820'),
+    203: (b'DS18B20', LIST_INT, 'ds1820'),
     204: (b'MB73XX', ULONG, ['mb_median', 'mb_sd']),
 }
 
@@ -192,6 +192,10 @@ def parse_frame(line):
 
                     value = struct.unpack_from("h", line)[0]
                     line = line[2:]
+
+                    if key == b'DS18B20': # DS18B20
+                        value = value / 16
+
                     values.append(value)
 
                 continue
@@ -246,18 +250,18 @@ if __name__ == '__main__':
 #       '../../data/data_20170710/TMP.TXT',
 #       '../../data/data_20170710/DATA/170706.TXT',
 
-        #'data/170925/DATA',
-        #'data/170926/DATA',
-        #'data/170929/DATA',
-        #'data/171002/DATA',
-        'data/171107/DATA',
+        #'test/170925/DATA',
+        #'test/170926/DATA',
+        #'test/170929/DATA',
+        #'test/171002/DATA',
+        'test/171107/DATA',
 
-        #'data/middalselvi/20171010/DATA',
+        #'test/middalselvi/20171010/DATA',
 
-#       'data/170924-finse/DATA/170921.TXT',
-#       'data/170924-finse/DATA/170922.TXT',
-#       'data/170924-finse/DATA/170923.TXT',
-#       'data/170924-finse/DATA/170924.TXT',
+#       'test/170924-finse/DATA/170921.TXT',
+#       'test/170924-finse/DATA/170922.TXT',
+#       'test/170924-finse/DATA/170923.TXT',
+#       'test/170924-finse/DATA/170924.TXT',
     ]
 
     data = []
