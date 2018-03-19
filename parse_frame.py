@@ -178,7 +178,7 @@ def parse_frame(line):
             # Variable list of values (done for the DS18B20 string)
             if sensor_type == LIST_INT:
                 name = names.lower()
-                values = frame.setdefault(name, [])
+                values = []
                 n_values = struct.unpack_from("B", line)[0]
                 line = line[1:]
                 for i in range(n_values):
@@ -192,12 +192,13 @@ def parse_frame(line):
 
                     value = struct.unpack_from("h", line)[0]
                     line = line[2:]
-
-                    if key == b'DS18B20': # DS18B20
-                        value = value / 16
-
                     values.append(value)
 
+                # DS18B20
+                if key == b'DS18B20':
+                    values = [value / 16 for value in values]
+
+                frame[name] = frame.get(name, []) + values
                 continue
 
             # Fixed number of values
