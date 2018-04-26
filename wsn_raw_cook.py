@@ -14,6 +14,7 @@ import control
 
 
 DBNAME = 'var/raw_cook.json'
+EVENT_FRAME = 2 # Used to signal boot
 
 class Consumer(mq.MQ):
 
@@ -52,6 +53,8 @@ class Consumer(mq.MQ):
             raise ValueError("Error parsing %s" % base64.b64encode(data))
 
         frame = frame[0]
+        if frame['name'] == '' and frame['type'] != EVENT_FRAME:
+            frame['name'] = db.get('name', '')
         frame['received'] = body['received']
         frame['source_addr_long'] = source_addr_long
         self.publish(frame)
@@ -87,7 +90,7 @@ class Consumer(mq.MQ):
             self.info('Sent "time" command')
 
         # Update db
-        self.update_db(source_addr_long, serial=frame['serial'], **kw)
+        self.update_db(source_addr_long, serial=frame['serial'], name=frame['name'], **kw)
 
     def remote_at_response(self, body):
         """

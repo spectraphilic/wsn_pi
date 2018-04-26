@@ -97,14 +97,14 @@ def parse_frame(line):
     n = struct.unpack_from("B", line)[0]
     line = line[1:]
 
-    frame = {}
+    frame = {'type': frame_type}
 
     # ASCII
     # <=><80>^C#408518488##0#TST:1499340600#BAT:98#IN_TEMP:31.00#
     if frame_type & 0x80:
         spline = line.split(b'#', n + 4)
         serial_id = spline[1]
-#       waspmote_id = spline[2]
+        waspmote_id = spline[2]
         sequence = spline[3]
         payload = spline[4:4+n]
         rest = spline[4+n]
@@ -116,6 +116,7 @@ def parse_frame(line):
 
         frame['serial'] = int(serial_id)
         frame['frame'] = int(sequence) # Frame sequence
+        frame['name'] = waspmote_id
 
         # Payload
         for field in payload:
@@ -165,6 +166,7 @@ def parse_frame(line):
 
         frame['serial'] = serial_id
         frame['frame'] = sequence # Frame sequence
+        frame['name'] = waspmote_id
 
         while line:
             sensor_id = struct.unpack_from("B", line)[0]

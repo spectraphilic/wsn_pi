@@ -24,7 +24,7 @@ class Consumer(MQ):
 
         # Tags
         tags = {}
-        for key in 'source_addr_long', 'serial':
+        for key in 'source_addr_long', 'serial', 'name':
             value = data.pop(key, None)
             if value is not None:
                 tags[key] = value
