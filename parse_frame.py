@@ -104,7 +104,10 @@ def parse_frame(line):
         return None
 
     v15 = frame_type > 5
-    frame_type -= 6 # From 0 (info) to 5 (low battery). We only use 0 and 2
+    if v15:
+        # Discard version
+        # From 0 (info) to 5 (low battery). We only use 0 and 2
+        frame_type -= 6
     frame = {'type': frame_type}
 
     # Number of bytes (Binary)
