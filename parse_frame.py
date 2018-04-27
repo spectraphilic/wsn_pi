@@ -93,138 +93,99 @@ def parse_frame(line):
     frame_type = struct.unpack_from("B", line)[0]
     line = line[1:]
 
-    # Number of fields (ASCII) or bytes (Binary)
-    n = struct.unpack_from("B", line)[0]
-    line = line[1:]
+    # Frame types
+    # 0 -  5 : v12
+    # 6 - 11 : v15
+    # From 7 to 11 are "Reserved types" in Libellium's lib. But we use the
+    # event type, and need to tell apart v12 from v15 (otherwise we cannot know
+    # whether the serial number is 32 or 64 bits long).
+    if frame_type > 11:
+        print("Warning: %d frame type not supported" % frame_type)
+        return None
 
+    v15 = frame_type > 5
+    frame_type -= 6 # From 0 (info) to 5 (low battery). We only use 0 and 2
     frame = {'type': frame_type}
 
-    # ASCII
-    # <=><80>^C#408518488##0#TST:1499340600#BAT:98#IN_TEMP:31.00#
-    if frame_type & 0x80:
-        spline = line.split(b'#', n + 4)
-        serial_id = spline[1]
-        waspmote_id = spline[2]
-        sequence = spline[3]
-        payload = spline[4:4+n]
-        rest = spline[4+n]
+    # Number of bytes (Binary)
+    n = struct.unpack_from("B", line)[0]
+    line = line[1:]
+    rest = line[n:]
+    line = line[:n]
 
-#       print('Serial ', serial_id)
-#       print('Wasp   ', waspmote_id)
-#       print('Seq    ', sequence)
-#       print('Payload', payload)
-
-        frame['serial'] = int(serial_id)
-        frame['frame'] = int(sequence) # Frame sequence
-        frame['name'] = waspmote_id
-
-        # Payload
-        for field in payload:
-            key, value = field.split(b':')
-            sensor = SENSORS_STR.get(key, ())
-            if not sensor:
-                print("Warning: %s sensor type not supported" % key)
-                return None
-
-            key, sensor_type, names = sensor
-            if sensor_type in (USHORT, INT, ULONG):
-                values = [int(x) for x in value.split(b';')]
-            elif sensor_type == FLOAT:
-                values = [float(x) for x in value.split(b';')]
-            elif sensor_type == STR:
-                assert len(names) == 1
-                values = [value]
-
-            assert len(values) == len(names)
-
-            for name, value in zip(names, values):
-                frame[name.lower()] = value
-
-    # Binary
+    # Serial id
+    if v15:
+        serial_id = struct.unpack_from(">Q", line)[0]
+        line = line[8:]
     else:
-        rest = line[n:]
-        line = line[:n]
-        if frame_type == 0x00:
-            v15 = False
-        elif frame_type == 0x06:
-            v15 = True
-        else:
-            print("Warning: %d frame type not supported" % frame_type)
+        serial_id = struct.unpack_from(">I", line)[0]
+        line = line[4:]
+
+    waspmote_id, line = line.split(b'#', 1)
+    sequence = struct.unpack_from("B", line)[0]
+    line = line[1:] # Payload
+
+    frame['serial'] = serial_id
+    frame['frame'] = sequence # Frame sequence
+    frame['name'] = waspmote_id.decode() # bytes to str
+
+    while line:
+        sensor_id = struct.unpack_from("B", line)[0]
+        line = line[1:]
+        sensor = SENSORS.get(sensor_id, ())
+        if not sensor:
+            print("Warning: %d sensor type not supported" % sensor_id)
             return None
 
-        # Serial id
-        if v15:
-            serial_id = struct.unpack_from(">Q", line)[0]
-            line = line[8:]
-        else:
-            serial_id = struct.unpack_from(">I", line)[0]
-            line = line[4:]
+        key, sensor_type, names = sensor
 
-        waspmote_id, line = line.split(b'#', 1)
-        sequence = struct.unpack_from("B", line)[0]
-        line = line[1:] # Payload
-
-        frame['serial'] = serial_id
-        frame['frame'] = sequence # Frame sequence
-        frame['name'] = waspmote_id
-
-        while line:
-            sensor_id = struct.unpack_from("B", line)[0]
+        # Variable list of values (done for the DS18B20 string)
+        if sensor_type == LIST_INT:
+            name = names.lower()
+            values = []
+            n_values = struct.unpack_from("B", line)[0]
             line = line[1:]
-            sensor = SENSORS.get(sensor_id, ())
-            if not sensor:
-                print("Warning: %d sensor type not supported" % sensor_id)
-                return None
+            for i in range(n_values):
+                if i > 0:
+                    value = struct.unpack_from("b", line)[0]
+                    line = line[1:]
+                    if value != -128:
+                        value = values[-1] + value
+                        values.append(value)
+                        continue
 
-            key, sensor_type, names = sensor
+                value = struct.unpack_from("h", line)[0]
+                line = line[2:]
+                values.append(value)
 
-            # Variable list of values (done for the DS18B20 string)
-            if sensor_type == LIST_INT:
-                name = names.lower()
-                values = []
-                n_values = struct.unpack_from("B", line)[0]
+            # DS18B20
+            if key == b'DS18B20':
+                values = [value / 16 for value in values]
+
+            frame[name] = frame.get(name, []) + values
+            continue
+
+        # Fixed number of values
+        for name in names:
+            if sensor_type == USHORT:
+                value = struct.unpack_from("B", line)[0]
                 line = line[1:]
-                for i in range(n_values):
-                    if i > 0:
-                        value = struct.unpack_from("b", line)[0]
-                        line = line[1:]
-                        if value != -128:
-                            value = values[-1] + value
-                            values.append(value)
-                            continue
+            elif sensor_type == INT:
+                value = struct.unpack_from("h", line)[0]
+                line = line[2:]
+            elif sensor_type == FLOAT:
+                value = struct.unpack_from("f", line)[0]
+                line = line[4:]
+            elif sensor_type == ULONG:
+                value = struct.unpack_from("I", line)[0]
+                line = line[4:]
+            elif sensor_type == STR:
+                length = struct.unpack_from("B", line)[0]
+                line = line[1:]
+                value = line[:length]
+                line = line[length:]
 
-                    value = struct.unpack_from("h", line)[0]
-                    line = line[2:]
-                    values.append(value)
-
-                # DS18B20
-                if key == b'DS18B20':
-                    values = [value / 16 for value in values]
-
-                frame[name] = frame.get(name, []) + values
-                continue
-
-            # Fixed number of values
-            for name in names:
-                if sensor_type == USHORT:
-                    value = struct.unpack_from("B", line)[0]
-                    line = line[1:]
-                elif sensor_type == INT:
-                    value = struct.unpack_from("h", line)[0]
-                    line = line[2:]
-                elif sensor_type == FLOAT:
-                    value = struct.unpack_from("f", line)[0]
-                    line = line[4:]
-                elif sensor_type == ULONG:
-                    value = struct.unpack_from("I", line)[0]
-                    line = line[4:]
-                elif sensor_type == STR:
-                    length = struct.unpack_from("B", line)[0]
-                    line = line[1:]
-                    value = line[:length]
-                    line = line[length:]
-
-                frame[name.lower()] = value
+            frame[name.lower()] = value
 
     return frame, rest
 

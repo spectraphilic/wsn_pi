@@ -16,6 +16,14 @@ import control
 DBNAME = 'var/raw_cook.json'
 EVENT_FRAME = 2 # Used to signal boot
 
+
+def get(addr, key, default=None):
+    """
+    Return a value from the local db.
+    """
+    return db.get(addr, {}).get(key, default)
+
+
 class Consumer(mq.MQ):
 
     name = 'wsn_raw_cook'
@@ -53,14 +61,14 @@ class Consumer(mq.MQ):
             raise ValueError("Error parsing %s" % base64.b64encode(data))
 
         frame = frame[0]
-        if frame['name'] == '' and frame['type'] != EVENT_FRAME:
-            frame['name'] = db.get('name', '')
+        if not frame['name'] and frame['type'] != EVENT_FRAME:
+            frame['name'] = get(source_addr_long, 'name', '')
         frame['received'] = body['received']
         frame['source_addr_long'] = source_addr_long
         self.publish(frame)
+        self.update_db(source_addr_long, serial=frame['serial'], name=frame['name'])
 
         # Sending frames section
-        kw = {}
         bauds = int(self.config.get('bauds', 9600))
         address = struct.pack(">Q", source_addr_long)
         tst = int(time.time())
@@ -69,28 +77,25 @@ class Consumer(mq.MQ):
         name = 'rssi_tst'
         threshold = ((1 * 60) - 5) * 60 # 55 minutes
         #threshold = 30 # 30s for testing
-        if (tst - threshold) > db.get(source_addr_long, {}).get(name, 0):
-            kw[name] = tst
+        if (tst - threshold) > get(source_addr_long, name, 0):
             with Serial('/dev/serial0', bauds) as serial:
                 xbee = DigiMesh(serial)
                 control.remote_at(xbee, address, command='DB')
             self.info('Asked for rssi')
+            self.update_db(source_addr_long, **{name: tst})
 
         # Sync time
         name = 'cmd_time'
         threshold = ((6 * 60) - 5) * 60 # 6hours - 5minutes
         #threshold = 30 # 30s for testing
-        if (tst - threshold) > db.get(source_addr_long, {}).get(name, 0):
-            kw[name] = tst
+        if (tst - threshold) > get(source_addr_long, name, 0):
             data = 'time %d' % tst
             with Serial('/dev/serial0', bauds) as serial:
                 xbee = DigiMesh(serial)
                 # TODO autoincrement frame_id like we do with remote-at
                 xbee.tx(dest_addr=address, data=data, frame_id='\x01')
             self.info('Sent "time" command')
-
-        # Update db
-        self.update_db(source_addr_long, serial=frame['serial'], name=frame['name'], **kw)
+            self.update_db(source_addr_long, **{name: tst})
 
     def remote_at_response(self, body):
         """
@@ -113,9 +118,10 @@ class Consumer(mq.MQ):
         source_addr_long = body['source_addr_long']
         received = body['received']
         self.publish({
-            'received': received,
             'source_addr_long': source_addr_long,
-            'serial': db.get(source_addr_long, {}).get('serial'),
+            'name': get(source_addr_long, 'name', ''),
+            'received': received,
+            'serial': get(source_addr_long, 'serial'),
             'rssi': - struct.unpack('B', body['parameter'])[0],
         })
 
