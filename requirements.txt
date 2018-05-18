@@ -1,5 +1,4 @@
 pyserial
 pika
 requests
-
--e git+https://github.com/niolabs/python-xbee.git#egg=xbee
+xbee==2.3.2
