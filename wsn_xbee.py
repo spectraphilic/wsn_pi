@@ -28,23 +28,22 @@ class Publisher(MQ):
             t0 = time.time()
             self.debug('FRAME %s', frame)
 
-            # Keep source address to later send frame
-            address = struct.pack(">Q", frame['source_addr_long'])
-
-            # Encode
-            for k in frame.keys():
-                if k != 'id':
-                    frame[k] = base64.b64encode(frame[k]).decode()
-
-            # Add timestamp
-            frame['received'] = int(t0)
+            # Prepare data to publish
+            data = {'received': int(t0)} # Timestamp
+            for key, value in frame.items():
+                if key != 'id':
+                    value = base64.b64encode(value).decode() # Base 64
+                if key != 'received':
+                    data[key] = value
 
             # Publish
-            self.publish(frame)
+            self.publish(data)
             queue.task_done()
 
             # Send ACK to mote
-            xbee.tx(dest_addr=address, data='ack', frame_id='\x01')
+            if frame['id'] == 'rx':
+                address = frame['source_addr']
+                xbee.tx(dest_addr=address, data='ack', frame_id='\x01')
 
             # Log
             self.info('Message sent in %f seconds', time.time() - t0)
