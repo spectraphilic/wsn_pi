@@ -2,12 +2,14 @@
 import base64
 import contextlib
 from queue import Queue, Empty
+import struct
 import time
 
 from serial import Serial
 from xbee import DigiMesh
 
 from mq import MQ
+
 
 class Publisher(MQ):
 
@@ -26,6 +28,9 @@ class Publisher(MQ):
             t0 = time.time()
             self.debug('FRAME %s', frame)
 
+            # Keep source address to later send frame
+            address = struct.pack(">Q", frame['source_addr_long'])
+
             # Encode
             for k in frame.keys():
                 if k != 'id':
@@ -37,6 +42,11 @@ class Publisher(MQ):
             # Publish
             self.publish(frame)
             queue.task_done()
+
+            # Send ACK to mote
+            xbee.tx(dest_addr=address, data='ack', frame_id='\x01')
+
+            # Log
             self.info('Message sent in %f seconds', time.time() - t0)
 
     #
@@ -65,5 +75,5 @@ if __name__ == '__main__':
     with Publisher() as publisher:
         bauds = int(publisher.config.get('bauds', 9600))
         with Serial('/dev/serial0', bauds) as serial:
-            with xbee_manager(serial, publisher.xbee_cb, publisher.xbee_cb_error):
+            with xbee_manager(serial, publisher.xbee_cb, publisher.xbee_cb_error) as xbee:
                 publisher.start()
