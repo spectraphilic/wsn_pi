@@ -79,7 +79,7 @@ def remote_at_wait(xbee, address, command='DB', timeout=5):
                 if address == BROADCAST:
                     print(frame)
                     return frame
-                if frame['source_addr_long'] == address:
+                if frame['source_addr'] == address:
                     print(frame)
                     return frame
     except TimeoutError:

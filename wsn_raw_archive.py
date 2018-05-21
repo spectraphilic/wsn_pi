@@ -17,10 +17,7 @@ class Consumer(MQ):
     def get_dirname(self, body):
         frame_type = body['id']
 
-        source_addr = body.get('source_addr_long')
-        if source_addr is None:
-            source_addr = body.get('source_addr')
-
+        source_addr = body.get('source_addr')
         if source_addr is not None:
             source_addr = base64.b64decode(source_addr)
             assert len(source_addr) == 8
