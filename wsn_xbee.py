@@ -2,7 +2,6 @@
 import base64
 import contextlib
 from queue import Queue, Empty
-import struct
 import time
 
 from serial import Serial
@@ -19,6 +18,9 @@ class Publisher(MQ):
         return ('wsn_raw', 'fanout', '')
 
     def bg_task(self):
+        # May be persistent for extra reliability
+        latest = {}
+
         while True:
             try:
                 frame = queue.get_nowait()
@@ -27,6 +29,14 @@ class Publisher(MQ):
 
             t0 = time.time()
             self.debug('FRAME %s', frame)
+
+            # Skip duplicates
+            if frame['id'] == 'rx':
+                address = frame['source_addr']
+                data = frame['data']
+                if data == frame.get('data'):
+                    continue
+                latest[address] = data
 
             # Prepare data to publish
             data = {'received': int(t0)} # Timestamp
