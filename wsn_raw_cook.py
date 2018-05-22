@@ -57,6 +57,7 @@ class Consumer(mq.MQ):
         name = 'rssi_tst'
         threshold = ((1 * 60) - 5) * 60 # 55 minutes
         #threshold = 30 # 30s for testing
+        #print('[rssi]', tst, threshold, self.db_get(source_addr, name, 0))
         if (tst - threshold) > self.db_get(source_addr, name, 0):
             with Serial('/dev/serial0', bauds) as serial:
                 xbee = DigiMesh(serial)
@@ -68,6 +69,7 @@ class Consumer(mq.MQ):
         name = 'cmd_time'
         threshold = ((6 * 60) - 5) * 60 # 6hours - 5minutes
         #threshold = 30 # 30s for testing
+        #print('[time]', tst, threshold, self.db_get(source_addr, name, 0))
         if (tst - threshold) > self.db_get(source_addr, name, 0):
             data = 'time %d' % tst
             with Serial('/dev/serial0', bauds) as serial:

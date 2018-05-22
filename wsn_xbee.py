@@ -2,6 +2,7 @@
 import base64
 import contextlib
 from queue import Queue, Empty
+import struct
 import time
 
 from serial import Serial
@@ -30,9 +31,10 @@ class Publisher(MQ):
 
             # Skip duplicates
             if frame['id'] == 'rx':
-                address = frame['source_addr']
-                data = frame['data']
+                address = struct.unpack(">Q", frame['source_addr'])[0]
+                data = base64.b64encode(frame['data']).decode()
                 if data == self.db_get(address, 'data'):
+                    self.info('Dup frame detected and skipped')
                     continue
                 self.db_update(address, data=data)
 
