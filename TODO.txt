@@ -1,0 +1,10 @@
+- Make only one process to write to the USB device. Move writing from
+  wsn_raw_cook to wsn_xbee
+
+- Add unit tests, documentation, review.
+
+- Upload files to the server in batches, maybe through RabbitMQ, so the files
+  are stored in the server's filesystem, not just in the database.
+
+- We use https://pypi.org/project/XBee/ ; consider using the new and official
+  https://pypi.org/project/digi-xbee/
