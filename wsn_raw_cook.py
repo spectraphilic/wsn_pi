@@ -1,7 +1,5 @@
 # Standard Library
 import base64
-import copy
-import json
 import struct
 import time
 
@@ -13,36 +11,19 @@ import parse_frame
 import control
 
 
-DBNAME = 'var/raw_cook.json'
 EVENT_FRAME = 2 # Used to signal boot
-
-
-def get(addr, key, default=None):
-    """
-    Return a value from the local db.
-    """
-    return db.get(addr, {}).get(key, default)
 
 
 class Consumer(mq.MQ):
 
     name = 'wsn_raw_cook'
+    db_name = 'var/raw_cook.json' 
 
     def sub_to(self):
         return ('wsn_raw', 'fanout', self.name, self.handle_message)
 
     def pub_to(self):
         return ('wsn_data', 'fanout', '')
-
-    def update_db(self, source_addr, **kw):
-        assert type(source_addr) is int
-        global db
-        db_new = copy.deepcopy(db)
-        db_new.setdefault(source_addr, {}).update(kw)
-        if db != db_new:
-            db = db_new
-            with open(DBNAME, 'w') as db_file:
-                json.dump(db, db_file, indent=2)
 
     def rx(self, body):
         """"
@@ -61,11 +42,11 @@ class Consumer(mq.MQ):
 
         frame = frame[0]
         if not frame['name'] and frame['type'] != EVENT_FRAME:
-            frame['name'] = get(source_addr, 'name', '')
+            frame['name'] = self.db_get(source_addr, 'name', '')
         frame['received'] = body['received']
         frame['source_addr_long'] = source_addr
         self.publish(frame)
-        self.update_db(source_addr, serial=frame['serial'], name=frame['name'])
+        self.db_update(source_addr, serial=frame['serial'], name=frame['name'])
 
         # Sending frames section
         bauds = int(self.config.get('bauds', 9600))
@@ -76,25 +57,25 @@ class Consumer(mq.MQ):
         name = 'rssi_tst'
         threshold = ((1 * 60) - 5) * 60 # 55 minutes
         #threshold = 30 # 30s for testing
-        if (tst - threshold) > get(source_addr, name, 0):
+        if (tst - threshold) > self.db_get(source_addr, name, 0):
             with Serial('/dev/serial0', bauds) as serial:
                 xbee = DigiMesh(serial)
                 control.remote_at(xbee, address, command='DB')
             self.info('Asked for rssi')
-            self.update_db(source_addr, **{name: tst})
+            self.db_update(source_addr, **{name: tst})
 
         # Sync time
         name = 'cmd_time'
         threshold = ((6 * 60) - 5) * 60 # 6hours - 5minutes
         #threshold = 30 # 30s for testing
-        if (tst - threshold) > get(source_addr, name, 0):
+        if (tst - threshold) > self.db_get(source_addr, name, 0):
             data = 'time %d' % tst
             with Serial('/dev/serial0', bauds) as serial:
                 xbee = DigiMesh(serial)
                 # TODO autoincrement frame_id like we do with remote-at
                 xbee.tx(dest_addr=address, data=data, frame_id='\x01')
             self.info('Sent "time" command')
-            self.update_db(source_addr, **{name: tst})
+            self.db_update(source_addr, **{name: tst})
 
     def remote_at_response(self, body):
         """
@@ -117,14 +98,14 @@ class Consumer(mq.MQ):
         received = body['received']
         self.publish({
             'source_addr_long': source_addr,
-            'name': get(source_addr, 'name', ''),
+            'name': self.db_get(source_addr, 'name', ''),
             'received': received,
-            'serial': get(source_addr, 'serial'),
+            'serial': self.db_get(source_addr, 'serial'),
             'rssi': - struct.unpack('B', body['parameter'])[0],
         })
 
         # Update db
-        self.update_db(source_addr, rssi_tst=received)
+        self.db_update(source_addr, rssi_tst=received)
 
     def tx_status(self, body):
         self.warning('tx_status not implemented') # TODO
@@ -161,14 +142,5 @@ class Consumer(mq.MQ):
 
 
 if __name__ == '__main__':
-    try:
-        with open(DBNAME) as db_file:
-            db = json.load(db_file)
-    except FileNotFoundError:
-        db = {}
-    else:
-        # JSON keys are always strings, but we use ints
-        db = {int(key): value for key, value in db.items()}
-
     with Consumer() as consumer:
         consumer.start()

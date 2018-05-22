@@ -1,5 +1,6 @@
 # Standard Library
 from configparser import RawConfigParser as ConfigParser
+import copy
 import json
 import logging
 import signal
@@ -12,7 +13,9 @@ class MQ(object):
     """
     This class is to be used as a base class. Its main purpose is to provide
     access to the message broker, either as publisher or consumer.
-    Additionnaly, it wraps config and logging.
+
+    Additionnaly, it wraps config and logging. And provides a persistent state
+    system, so the progam can hold state accross reboots.
 
     It is meant to be used as a context manager:
 
@@ -30,13 +33,16 @@ class MQ(object):
     sub_to = None
     pub_to = None
     bg_task = None # Background task
+    db_name = None
 
     def __init__(self):
         self.connection = None
         self.channel = None
         self.logger = logging.getLogger(self.name)
         self.started = False
-        # Read configuration
+        self.todo = set() # Used to know when the setup process is done
+
+        # Configuration
         config = ConfigParser()
         config.read('config.ini')
         self.config = {}
@@ -46,8 +52,17 @@ class MQ(object):
             except KeyError:
                 pass
 
-        # Used to know when the setup process is done
-        self.todo = set()
+        # Persistent state
+        if self.db_name is not None:
+            try:
+                with open(self.db_name) as db_file:
+                    db = json.load(db_file)
+            except FileNotFoundError:
+                self.db = {}
+            else:
+                # JSON keys are always strings, but we use ints
+                self.db = {int(key): value for key, value in db.items()}
+
 
     def start(self):
         signal.signal(signal.SIGTERM, self.stop)
@@ -228,6 +243,27 @@ class MQ(object):
 
     def exception(self, *args):
         self.logger.exception(*args)
+
+
+    #
+    # State API
+    #
+    def db_get(self, addr, key, default=None):
+        """
+        Return a value from the local db.
+        """
+        return self.db.get(addr, {}).get(key, default)
+
+    def db_update(self, source_addr, **kw):
+        assert self.db_name is not None
+        assert type(source_addr) is int
+
+        db_new = copy.deepcopy(self.db)
+        db_new.setdefault(source_addr, {}).update(kw)
+        if self.db != db_new:
+            db = db_new
+            with open(self.db_name, 'w') as db_file:
+                json.dump(db, db_file, indent=2)
 
     #
     # Context manager

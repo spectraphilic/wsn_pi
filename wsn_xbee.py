@@ -13,14 +13,12 @@ from mq import MQ
 class Publisher(MQ):
 
     name = 'wsn_xbee'
+    db_name = 'var/xbee.json'
 
     def pub_to(self):
         return ('wsn_raw', 'fanout', '')
 
     def bg_task(self):
-        # May be persistent for extra reliability
-        latest = {}
-
         while True:
             try:
                 frame = queue.get_nowait()
@@ -34,9 +32,9 @@ class Publisher(MQ):
             if frame['id'] == 'rx':
                 address = frame['source_addr']
                 data = frame['data']
-                if data == frame.get('data'):
+                if data == self.db_get(address, 'data'):
                     continue
-                latest[address] = data
+                self.db_update(address, data=data)
 
             # Prepare data to publish
             data = {'received': int(t0)} # Timestamp
