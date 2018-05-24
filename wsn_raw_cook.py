@@ -1,14 +1,9 @@
 # Standard Library
 import base64
 import struct
-import time
-
-from serial import Serial
-from xbee import DigiMesh
 
 import mq
 import parse_frame
-import control
 
 
 EVENT_FRAME = 2 # Used to signal boot
@@ -17,7 +12,6 @@ EVENT_FRAME = 2 # Used to signal boot
 class Consumer(mq.MQ):
 
     name = 'wsn_raw_cook'
-    db_name = 'var/raw_cook.json' 
 
     def sub_to(self):
         return ('wsn_raw', 'fanout', self.name, self.handle_message)
@@ -47,37 +41,6 @@ class Consumer(mq.MQ):
         frame['source_addr_long'] = source_addr
         self.publish(frame)
         self.db_update(source_addr, serial=frame['serial'], name=frame['name'])
-
-        # Sending frames section
-        bauds = int(self.config.get('bauds', 9600))
-        address = struct.pack(">Q", source_addr)
-        tst = int(time.time())
-
-        # RSSI
-        name = 'rssi_tst'
-        threshold = ((1 * 60) - 5) * 60 # 55 minutes
-        #threshold = 30 # 30s for testing
-        #print('[rssi]', tst, threshold, self.db_get(source_addr, name, 0))
-        if (tst - threshold) > self.db_get(source_addr, name, 0):
-            with Serial('/dev/serial0', bauds) as serial:
-                xbee = DigiMesh(serial)
-                control.remote_at(xbee, address, command='DB')
-            self.info('Asked for rssi')
-            self.db_update(source_addr, **{name: tst})
-
-        # Sync time
-        name = 'cmd_time'
-        threshold = ((6 * 60) - 5) * 60 # 6hours - 5minutes
-        #threshold = 30 # 30s for testing
-        #print('[time]', tst, threshold, self.db_get(source_addr, name, 0))
-        if (tst - threshold) > self.db_get(source_addr, name, 0):
-            data = 'time %d' % tst
-            with Serial('/dev/serial0', bauds) as serial:
-                xbee = DigiMesh(serial)
-                # TODO autoincrement frame_id like we do with remote-at
-                xbee.tx(dest_addr=address, data=data, frame_id='\x01')
-            self.info('Sent "time" command')
-            self.db_update(source_addr, **{name: tst})
 
     def remote_at_response(self, body):
         """

@@ -8,6 +8,7 @@ import time
 from serial import Serial
 from xbee import DigiMesh
 
+import control
 from mq import MQ
 
 
@@ -27,16 +28,17 @@ class Publisher(MQ):
                 return
 
             t0 = time.time()
-            self.debug('FRAME %s', frame)
+            address = frame['source_addr'] # used in xbee.tx
+            address_int = struct.unpack(">Q", address)[0] # Key in db
+            self.debug('FRAME {} from {}'.format(frame, address_int))
 
             # Skip duplicates
             if frame['id'] == 'rx':
-                address = struct.unpack(">Q", frame['source_addr'])[0]
                 data = base64.b64encode(frame['data']).decode()
-                if data == self.db_get(address, 'data'):
+                if data == self.db_get(address_int, 'data'):
                     self.info('Dup frame detected and skipped')
                     continue
-                self.db_update(address, data=data)
+                self.db_update(address_int, data=data)
 
             # Prepare data to publish
             data = {'received': int(t0)} # Timestamp
@@ -52,8 +54,27 @@ class Publisher(MQ):
 
             # Send ACK to mote
             if frame['id'] == 'rx':
-                address = frame['source_addr']
-                xbee.tx(dest_addr=address, data='ack', frame_id='\x01')
+                control.tx(address, 'ack')
+
+            # RSSI (once an hour)
+            name = 'rssi_tst'
+            threshold = ((1 * 60) - 5) * 60 # 55 minutes
+            #threshold = 30 # 30s for testing
+            #print('[rssi]', t0, threshold, self.db_get(address_int, name, 0))
+            if (t0 - threshold) > self.db_get(address_int, name, 0):
+                control.remote_at(xbee, address, command='DB')
+                self.info('Asked for rssi')
+                self.db_update(address_int, **{name: t0})
+
+            # Sync time (once every 6h)
+            name = 'cmd_time'
+            threshold = ((6 * 60) - 5) * 60 # 6hours - 5minutes
+            #threshold = 30 # 30s for testing
+            #print('[time]', t0, threshold, self.db_get(address_int, name, 0))
+            if (t0 - threshold) > self.db_get(address_int, name, 0):
+                control.tx(address, 'time %d' % int(t0))
+                self.info('Sent "time" command')
+                self.db_update(address_int, **{name: t0})
 
             # Log
             self.info('Message sent in %f seconds', time.time() - t0)

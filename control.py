@@ -65,7 +65,18 @@ def remote_at(xbee, address, command, frame_ids={}):
     frame_id = bytearray([frame_id])
 
     # Send AT command
-    xbee.remote_at(command=command, frame_id=frame_id, dest_addr_long=address)
+    xbee.remote_at(dest_addr_long=address, command=command, frame_id=frame_id)
+    return frame_id
+
+
+def tx(xbee, address, data, frame_ids={}):
+    # frame_id is required
+    frame_id = frame_ids.setdefault(address, 1)
+    frame_ids[address] = 1 if (frame_id == 255) else (frame_id + 1) # Next
+    frame_id = bytearray([frame_id])
+
+    # Send AT command
+    xbee.tx(dest_addr=address, data=data, frame_id=frame_id)
     return frame_id
 
 
