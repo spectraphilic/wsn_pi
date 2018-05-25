@@ -37,11 +37,11 @@ class Consumer(mq.MQ):
 
         frame = frame[0]
         if not frame['name'] and frame['type'] != EVENT_FRAME:
-            frame['name'] = self.db_get(source_addr, 'name', '')
+            frame['name'] = self.get_state(source_addr, 'name', '')
         frame['received'] = body['received']
         frame['source_addr_long'] = source_addr
         self.publish(frame)
-        self.db_update(source_addr, serial=frame['serial'], name=frame['name'])
+        self.set_state(source_addr, serial=frame['serial'], name=frame['name'])
 
     def remote_at_response(self, body):
         """
@@ -64,14 +64,14 @@ class Consumer(mq.MQ):
         received = body['received']
         self.publish({
             'source_addr_long': source_addr,
-            'name': self.db_get(source_addr, 'name', ''),
+            'name': self.get_state(source_addr, 'name', ''),
             'received': received,
-            'serial': self.db_get(source_addr, 'serial'),
+            'serial': self.get_state(source_addr, 'serial'),
             'rssi': - struct.unpack('B', body['parameter'])[0],
         })
 
         # Update db
-        self.db_update(source_addr, rssi_tst=received)
+        self.set_state(source_addr, rssi_tst=received)
 
     def handle_message(self, body):
         # Decode

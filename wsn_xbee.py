@@ -1,6 +1,7 @@
 # Standard Library
 import base64
 import contextlib
+#from datetime import datetime
 from queue import Queue, Empty
 import struct
 import time
@@ -27,6 +28,8 @@ class Publisher(MQ):
             except Empty:
                 return
 
+            t0 = time.time()
+
             # The tx_status frame means the frame was sent without error (it
             # doesn't mean it was received at the other end)
             frame_id = frame['id']
@@ -37,7 +40,7 @@ class Publisher(MQ):
                 self.debug('tx_status not implemented')
                 continue
 
-            t0 = time.time()
+            # Log
             address = frame['source_addr'] # used in control.tx/remote_at
             address_int = struct.unpack(">Q", address)[0] # Key in db
             self.debug('FRAME {} from {}'.format(frame, address_int))
@@ -45,11 +48,11 @@ class Publisher(MQ):
             # Skip duplicates
             if frame_id == 'rx':
                 data = base64.b64encode(frame['data']).decode()
-                if data == self.db_get(address_int, 'data'):
+                if data == self.get_state(address_int, 'data'):
                     self.info('Dup frame detected and skipped')
                     control.tx(xbee, address, 'ack')
                     continue
-                self.db_update(address_int, data=data)
+                self.set_state(address_int, data=data)
 
             # Prepare data to publish
             data = {'received': int(t0)} # Timestamp
@@ -69,26 +72,28 @@ class Publisher(MQ):
 
             # RSSI (once an hour)
             name = 'rssi_tst'
-            threshold = ((1 * 60) - 5) * 60 # 55 minutes
+            threshold = 55 * 60 # 55 minutes
             #threshold = 30 # 30s for testing
-            #print('[rssi]', t0, threshold, self.db_get(address_int, name, 0))
-            if (t0 - threshold) > self.db_get(address_int, name, 0):
+            current = self.get_state(address_int, name, 0)
+            #print('[rssi]', datetime.fromtimestamp(t0), datetime.fromtimestamp(current), threshold)
+            if (t0 - threshold) > current:
                 control.remote_at(xbee, address, command='DB')
                 self.info('Asked for rssi')
-                self.db_update(address_int, **{name: t0})
+                self.set_state(address_int, **{name: t0})
 
             # Sync time (once every 6h)
             name = 'cmd_time'
             threshold = ((6 * 60) - 5) * 60 # 6hours - 5minutes
             #threshold = 30 # 30s for testing
-            #print('[time]', t0, threshold, self.db_get(address_int, name, 0))
-            if (t0 - threshold) > self.db_get(address_int, name, 0):
+            current = self.get_state(address_int, name, 0)
+            #print('[time]', datetime.fromtimestamp(t0), datetime.fromtimestamp(current), threshold)
+            if (t0 - threshold) > self.get_state(address_int, name, 0):
                 control.tx(xbee, address, 'time %d' % int(t0))
                 self.info('Sent "time" command')
-                self.db_update(address_int, **{name: t0})
+                self.set_state(address_int, **{name: t0})
 
             # Log
-            self.info('Message sent in %f seconds', time.time() - t0)
+            self.info('Message published in %f seconds', time.time() - t0)
 
     #
     # XBee callbaks, defined here to use the logging helpers

@@ -42,6 +42,9 @@ class MQ(object):
         self.started = False
         self.todo = set() # Used to know when the setup process is done
 
+        # Persistent state
+        self.state = self.load_state(self.db_name)
+
         # Configuration
         config = ConfigParser()
         config.read('config.ini')
@@ -51,18 +54,6 @@ class MQ(object):
                 self.config.update(dict(config[section]))
             except KeyError:
                 pass
-
-        # Persistent state
-        if self.db_name is not None:
-            try:
-                with open(self.db_name) as db_file:
-                    db = json.load(db_file)
-            except FileNotFoundError:
-                self.db = {}
-            else:
-                # JSON keys are always strings, but we use ints
-                self.db = {int(key): value for key, value in db.items()}
-
 
     def start(self):
         signal.signal(signal.SIGTERM, self.stop)
@@ -248,22 +239,40 @@ class MQ(object):
     #
     # State API
     #
-    def db_get(self, addr, key, default=None):
+    def load_state(self, name):
+        if not name:
+            return {}
+
+        try:
+            with open(name) as db_file:
+                state = json.load(db_file)
+        except FileNotFoundError:
+            return {}
+
+        # JSON keys are always strings, but we use ints
+        return {int(key): value for key, value in state.items()}
+
+    def get_state(self, addr, key, default=None):
         """
         Return a value from the local db.
         """
-        return self.db.get(addr, {}).get(key, default)
+        return self.state.get(addr, {}).get(key, default)
 
-    def db_update(self, source_addr, **kw):
-        assert self.db_name is not None
+    def set_state(self, source_addr, **kw):
         assert type(source_addr) is int
 
-        db_new = copy.deepcopy(self.db)
+        db_new = copy.deepcopy(self.state)
         db_new.setdefault(source_addr, {}).update(kw)
-        if self.db != db_new:
-            db = db_new
-            with open(self.db_name, 'w') as db_file:
-                json.dump(db, db_file, indent=2)
+        if self.state != db_new:
+            self.state = db_new
+            self.save_state()
+
+    def save_state(self):
+        if not self.db_name:
+            return
+
+        with open(self.db_name, 'w') as db_file:
+            json.dump(self.state, db_file, indent=2)
 
     #
     # Context manager
