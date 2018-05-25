@@ -27,16 +27,27 @@ class Publisher(MQ):
             except Empty:
                 return
 
+            # The tx_status frame means the frame was sent without error (it
+            # doesn't mean it was received at the other end)
+            frame_id = frame['id']
+            if frame_id == 'tx_status':
+                # TODO Match this frame with the outgoing frame. The tx_status
+                # frame doesn't have the source_addr field, so this may be a
+                # bit harder.
+                self.debug('tx_status not implemented')
+                continue
+
             t0 = time.time()
-            address = frame['source_addr'] # used in xbee.tx
+            address = frame['source_addr'] # used in control.tx/remote_at
             address_int = struct.unpack(">Q", address)[0] # Key in db
             self.debug('FRAME {} from {}'.format(frame, address_int))
 
             # Skip duplicates
-            if frame['id'] == 'rx':
+            if frame_id == 'rx':
                 data = base64.b64encode(frame['data']).decode()
                 if data == self.db_get(address_int, 'data'):
                     self.info('Dup frame detected and skipped')
+                    control.tx(xbee, address, 'ack')
                     continue
                 self.db_update(address_int, data=data)
 
@@ -53,8 +64,8 @@ class Publisher(MQ):
             queue.task_done()
 
             # Send ACK to mote
-            if frame['id'] == 'rx':
-                control.tx(address, 'ack')
+            if frame_id == 'rx':
+                control.tx(xbee, address, 'ack')
 
             # RSSI (once an hour)
             name = 'rssi_tst'
@@ -72,7 +83,7 @@ class Publisher(MQ):
             #threshold = 30 # 30s for testing
             #print('[time]', t0, threshold, self.db_get(address_int, name, 0))
             if (t0 - threshold) > self.db_get(address_int, name, 0):
-                control.tx(address, 'time %d' % int(t0))
+                control.tx(xbee, address, 'time %d' % int(t0))
                 self.info('Sent "time" command')
                 self.db_update(address_int, **{name: t0})
 

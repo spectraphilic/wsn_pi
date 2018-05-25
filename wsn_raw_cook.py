@@ -12,6 +12,7 @@ EVENT_FRAME = 2 # Used to signal boot
 class Consumer(mq.MQ):
 
     name = 'wsn_raw_cook'
+    db_name = 'var/raw_cook.json'
 
     def sub_to(self):
         return ('wsn_raw', 'fanout', self.name, self.handle_message)
@@ -72,9 +73,6 @@ class Consumer(mq.MQ):
         # Update db
         self.db_update(source_addr, rssi_tst=received)
 
-    def tx_status(self, body):
-        self.warning('tx_status not implemented') # TODO
-
     def handle_message(self, body):
         # Decode
         for k in body.keys():
@@ -96,7 +94,6 @@ class Consumer(mq.MQ):
         handler = {
             'rx': self.rx,
             'remote_at_response': self.remote_at_response,
-            'tx_status': self.tx_status,
         }.get(frame_type)
 
         if handler is None:
