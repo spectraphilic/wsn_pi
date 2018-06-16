@@ -163,6 +163,8 @@ def parse_frame(line):
 
             # DS18B20
             if key == b'DS18B20':
+                #f = lambda x: x if (-100 < x < 100) else None # None if out of range
+                #values = [f(value / 16) for value in values]
                 values = [value / 16 for value in values]
 
             frame[name] = frame.get(name, []) + values
