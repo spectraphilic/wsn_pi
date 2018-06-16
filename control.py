@@ -115,7 +115,7 @@ def command(f):
     def wrapper(self, arg):
         args = arg.split()
         return f(self, *args)
-    
+
     wrapper.__doc__ = f.__doc__
     return wrapper
 

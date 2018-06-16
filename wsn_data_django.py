@@ -41,7 +41,6 @@ class Consumer(MQ):
         assert status == 201, '{} {}'.format(status, response.json())
 
 
-
 if __name__ == '__main__':
     with Consumer() as consumer:
         consumer.start()

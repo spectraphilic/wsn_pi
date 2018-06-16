@@ -5,6 +5,7 @@ import os
 
 from mq import MQ
 
+
 class Consumer(MQ):
 
     name = 'wsn_data_archive'

@@ -235,7 +235,6 @@ class MQ(object):
     def exception(self, *args):
         self.logger.exception(*args)
 
-
     #
     # State API
     #

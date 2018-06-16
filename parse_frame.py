@@ -46,6 +46,7 @@ SENSORS = {
 
 SENSORS_STR = {v[0]: v for k, v in SENSORS.items()}
 
+
 class frameObj(object):
     def __init__(self, kw):
         # Set defaults (XXX Do we need this?)
@@ -55,7 +56,7 @@ class frameObj(object):
         self.tcb = np.nan
         self.in_temp = np.nan
         self.humb = np.nan
-        
+
         for key, value in kw.items():
             setattr(self, key, value)
 

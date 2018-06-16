@@ -7,6 +7,7 @@ import struct
 
 from mq import MQ
 
+
 class Consumer(MQ):
 
     name = 'wsn_raw_archive'
