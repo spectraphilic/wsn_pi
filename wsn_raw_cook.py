@@ -3,7 +3,7 @@ import base64
 import struct
 
 import mq
-import parse_frame
+import waspmote
 
 
 EVENT_FRAME = 2 # Used to signal boot
@@ -31,7 +31,7 @@ class Consumer(mq.MQ):
 
         # Skip source_addr, id and options
         data = body['data']
-        frame = parse_frame.parse_frame(data)
+        frame = waspmote.parse_frame(data)
         if frame is None:
             raise ValueError("Error parsing %s" % base64.b64encode(data))
 
