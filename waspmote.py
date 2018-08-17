@@ -4,9 +4,16 @@ Script to parse frames from waspmote
 Simon Filhol
 '''
 
+# Standard Library
 from datetime import datetime, timezone
 import os
 import struct
+
+from Crypto.Cipher import AES
+
+
+key = b"0123456789123456" # TODO read from somewhere
+cipher = AES.new(key, AES.MODE_ECB)
 
 
 """
@@ -90,22 +97,33 @@ def parse_frame(line):
     frame_type = struct.unpack_from("B", line)[0]
     line = line[1:]
 
-    # Frame types
-    # 0 -  5 : v12
-    # 6 - 11 : v15
-    # From 7 to 11 are "Reserved types" in Libellium's lib. But we use the
-    # event type, and need to tell apart v12 from v15 (otherwise we cannot know
-    # whether the serial number is 32 or 64 bits long).
-    if frame_type > 11:
-        print("Warning: %d frame type not supported" % frame_type)
+    if frame_type & 128: # b7
+        print("Warning: text freames not supported (%d)" % frame_type)
         return None
 
-    v15 = frame_type > 5
-    if v15:
-        # Discard version
-        # From 0 (info) to 5 (low battery). We only use 0 and 2
-        frame_type -= 6
-    frame = {'type': frame_type}
+    if frame_type == 96:
+        encrypted = True
+        v15 = True
+    elif 96 < frame_type < 100:
+        encrypted = True
+        v15 = False
+    elif frame_type > 11:
+        print("Warning: %d frame type not supported" % frame_type)
+        return None
+    else:
+        encrypted = False
+        # 0 -  5 : v12
+        # 6 - 11 : v15
+        # From 7 to 11 are "Reserved types" in Libellium's lib. But we use the
+        # event type, and need to tell apart v12 from v15 (otherwise we cannot
+        # know whether the serial number is 32 or 64 bits long).
+        v15 = frame_type > 5
+        if v15:
+            # Discard version
+            # From 0 (info) to 5 (low battery). We only use 0 and 2
+            frame_type -= 6
+
+        frame = {'type': frame_type}
 
     # Number of bytes (Binary)
     n = struct.unpack_from("B", line)[0]
@@ -121,13 +139,34 @@ def parse_frame(line):
         serial_id = struct.unpack_from(">I", line)[0]
         line = line[4:]
 
-    waspmote_id, line = line.split(b'#', 1)
+    # Encrypted
+    if encrypted:
+        if not v15:
+            name, line = line.split(b'#', 1)
+            name = name.decode()
+
+        line = cipher.decrypt(line)
+        frame, _ = parse_frame(line) # _ may contain zeroes
+        if frame['serial'] != serial_id:
+            print("Warning: serial numbers do not match %d != %d", serial_id, frame['serial'])
+            return None
+
+        if not v15 and frame['name'] != name:
+            print("Warning: name do not match %s != %s", name, frame['name'])
+            return None
+
+        return frame, rest
+
+    # Name
+    name, line = line.split(b'#', 1)
+    name = name.decode() # bytes to str
+    # Sequence
     sequence = struct.unpack_from("B", line)[0]
     line = line[1:] # Payload
 
     frame['serial'] = serial_id
     frame['frame'] = sequence # Frame sequence
-    frame['name'] = waspmote_id.decode() # bytes to str
+    frame['name'] = name
 
     while line:
         sensor_id = struct.unpack_from("B", line)[0]
