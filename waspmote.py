@@ -6,7 +6,6 @@ Simon Filhol
 
 # Standard Library
 from datetime import datetime, timezone
-import os
 import struct
 
 from Crypto.Cipher import AES
@@ -268,87 +267,3 @@ def data_to_json(data):
     time = datetime.fromtimestamp(time, timezone.utc).isoformat()
 
     return {'tags': tags, 'frames': [{'time': time, 'data': data}]}
-
-
-#
-# Old code that may be removed
-# May still be usefull if we want to plot raw files
-#
-
-class frameObj(object):
-    def __init__(self, kw):
-        # Set defaults (XXX Do we need this?)
-        import numpy as np
-        self.tst = np.nan
-        self.bat = np.nan
-        self.tcb = np.nan
-        self.in_temp = np.nan
-        self.humb = np.nan
-
-        for key, value in kw.items():
-            setattr(self, key, value)
-
-
-def read_wasp_file(filename, data):
-    with open(filename, 'rb') as f:
-        for frame in read_wasp_data(f):
-            frame = frameObj(frame)
-            data.append(frame.__dict__)
-
-
-if __name__ == '__main__':
-    import pandas as pd
-    #import matplotlib as mpl
-    #mpl.use('PS')
-    import matplotlib.pyplot as plt
-
-    names = [
-#       '../../data/data_20170710/TMP.TXT',
-#       '../../data/data_20170710/DATA/170706.TXT',
-
-        #'test/170925/DATA',
-        #'test/170926/DATA',
-        #'test/170929/DATA',
-        #'test/171002/DATA',
-        'test/171107/DATA',
-
-        #'test/middalselvi/20171010/DATA',
-
-#       'test/170924-finse/DATA/170921.TXT',
-#       'test/170924-finse/DATA/170922.TXT',
-#       'test/170924-finse/DATA/170923.TXT',
-#       'test/170924-finse/DATA/170924.TXT',
-    ]
-
-    data = []
-    for name in names:
-        if os.path.isdir(name):
-            for filename in os.listdir(name):
-                filename = os.path.join(name, filename)
-                read_wasp_file(filename, data)
-        else:
-            read_wasp_file(name, data)
-    data_frame = pd.DataFrame(data)
-
-    data_frame.sort_values(by='tst', inplace=True)
-    data_frame['timestamp'] = pd.to_datetime(data_frame['tst'], unit='s')
-    data_frame = data_frame.set_index('timestamp')
-
-    #plt.ion()
-
-    # CTD
-    graphs = [
-        ('bat', 'Battery level (%)'),
-        ('in_temp', 'Internal Temperature (degC)'), # tcb
-        #('ctd_depth', 'CTD Water depth'),
-        #('ctd_temp', 'CTD Water temperature'),
-        #('ctd_cond', 'CTD Water conductivity')
-    ]
-    fig, ax = plt.subplots(len(graphs), sharex=True)
-    for i, (name, title) in enumerate(graphs):
-        getattr(data_frame, name).dropna().plot(ax=ax[i])
-        ax[i].set_title(i)
-
-    # Plot
-    plt.plot()
-    plt.show()
