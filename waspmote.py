@@ -1,7 +1,7 @@
 '''
 Script to parse frames from waspmote
 
-Simon Filhol
+Simon Filhol, J. David Ibáñez
 '''
 
 # Standard Library
@@ -9,10 +9,6 @@ from datetime import datetime, timezone
 import struct
 
 from Crypto.Cipher import AES
-
-
-key = b"0123456789123456" # TODO read from somewhere
-cipher = AES.new(key, AES.MODE_ECB)
 
 
 """
@@ -53,8 +49,6 @@ SENSORS = {
     207: (b'WS100', 'fffuf', ['precip_abs', 'precip_dif', 'precip_int_h', 'precip_type', 'precip_int_min']),
 }
 
-SENSORS_STR = {v[0]: v for k, v in SENSORS.items()}
-
 
 def search_frame(data):
     """
@@ -79,7 +73,20 @@ def search_frame(data):
     return '', data
 
 
-def parse_frame(line):
+ciphers = {}
+def get_cipher(key):
+    if key is None:
+        return None
+
+    cipher = ciphers.get_cipher(key)
+    if cipher is None:
+        cipher = AES.new(key, AES.MODE_ECB)
+        ciphers[key] = cipher
+
+    return cipher
+
+
+def parse_frame(line, cipher_key=None):
     """
     Parse the frame starting at the given byte string. We consider that the
     frame start delimeter has already been read.
@@ -143,6 +150,11 @@ def parse_frame(line):
         if not v15:
             name, line = line.split(b'#', 1)
             name = name.decode()
+
+        cipher = get_cipher(cipher_key)
+        if cipher is None:
+            print('Warning: encrypted frames not supported because no key provided')
+            return None
 
         line = cipher.decrypt(line)
         frame, _ = parse_frame(line) # _ may contain zeroes

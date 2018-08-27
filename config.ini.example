@@ -7,6 +7,9 @@ log_level = debug
 
 [wsn_raw_archive]
 
+[wsn_raw_cook]
+key = 0123456789012345
+
 [wsn_data_django]
 url = http://hycamp.org/wsn/api/create/
 token = 

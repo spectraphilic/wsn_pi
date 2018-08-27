@@ -28,10 +28,11 @@ class Consumer(mq.MQ):
          'options': '\xc2'}
         """
         source_addr = body['source_addr']
+        cipher_key = self.config.get('key')
 
         # Skip source_addr, id and options
         data = body['data']
-        frame = waspmote.parse_frame(data)
+        frame = waspmote.parse_frame(data, cipher_key=cipher_key)
         if frame is None:
             raise ValueError("Error parsing %s" % base64.b64encode(data))
 

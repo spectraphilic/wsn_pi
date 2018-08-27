@@ -1,5 +1,5 @@
 """
-Sometime there may be a bug, for instance in parse_frame. This script will
+Sometimes there may be a bug, for instance in parse_frame. This script will
 re-publish the raw frames stored in the given file, to the wsn_raw_cook
 channel.
 
