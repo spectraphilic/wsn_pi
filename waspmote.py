@@ -107,7 +107,7 @@ def parse_frame(line, cipher_key=None):
     line = line[1:]
 
     if frame_type & 128: # b7
-        print("Warning: text freames not supported (%d)" % frame_type)
+        print("Warning: text frames not supported (%d)" % frame_type)
         return None
 
     if frame_type == 96:
