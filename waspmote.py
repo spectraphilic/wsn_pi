@@ -78,7 +78,7 @@ def get_cipher(key):
     if key is None:
         return None
 
-    cipher = ciphers.get_cipher(key)
+    cipher = ciphers.get(key)
     if cipher is None:
         cipher = AES.new(key, AES.MODE_ECB)
         ciphers[key] = cipher
@@ -91,6 +91,9 @@ def parse_frame(line, cipher_key=None):
     Parse the frame starting at the given byte string. We consider that the
     frame start delimeter has already been read.
     """
+
+    if cipher_key is not None and type(cipher_key) is not bytes:
+        raise TypeError('cipher_key must be None or bytes, got %s' % type(cipher_key))
 
     # Start delimiter
     if not line.startswith(b'<=>'):
