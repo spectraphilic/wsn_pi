@@ -47,7 +47,11 @@ class Publisher(MQ):
 
             # Skip duplicates
             if frame_id == 'rx':
-                data = base64.b64encode(frame['data']).decode()
+                data = frame['data']
+                if data == b'ping':
+                    self.info('ping')
+                    continue
+                data = base64.b64encode(data).decode()
                 if data == self.get_state(address_int, 'data'):
                     self.info('Dup frame detected and skipped')
                     control.tx(xbee, address, 'ack')
