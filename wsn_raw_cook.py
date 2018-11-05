@@ -28,7 +28,9 @@ class Consumer(mq.MQ):
          'options': '\xc2'}
         """
         source_addr = body['source_addr']
-        cipher_key = self.config.get('key').encode()
+        cipher_key = self.config.get('key')
+        if cipher_key is not None:
+            cipher_key = cipher_key.encode()
 
         # Skip source_addr, id and options
         data = body['data']
