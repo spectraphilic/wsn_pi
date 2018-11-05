@@ -38,7 +38,7 @@ SENSORS = {
      85: (b'TX_PWR', 'u', ['tx_pwr']),
 #    89: (b'SPEED_OG', ),
 #    90: (b'COURSE_OG', ),
-#    91: (b'ALT', ),
+     91: (b'ALT', 'f', ['altitude']),
     123: (b'TST', 'w', ['tst']),
     200: (b'CTD-10', 'fff', ['ctd_depth', 'ctd_temp', 'ctd_cond']),
     201: (b'DS-2_1', 'fff', ['ds2_speed', 'ds2_dir', 'ds2_temp']), # Legacy
