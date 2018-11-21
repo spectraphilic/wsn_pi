@@ -74,17 +74,6 @@ class Publisher(MQ):
             if frame_id == 'rx':
                 control.tx(xbee, address, 'ack')
 
-            # RSSI (once an hour)
-            name = 'rssi_tst'
-            threshold = 55 * 60 # 55 minutes
-            #threshold = 30 # 30s for testing
-            current = self.get_state(address_int, name, 0)
-            #print('[rssi]', datetime.fromtimestamp(t0), datetime.fromtimestamp(current), threshold)
-            if (t0 - threshold) > current:
-                control.remote_at(xbee, address, command='DB')
-                self.info('Asked for rssi')
-                self.set_state(address_int, **{name: t0})
-
             # Sync time (once every 6h)
             name = 'cmd_time'
             threshold = ((6 * 60) - 5) * 60 # 6hours - 5minutes
