@@ -91,7 +91,7 @@ class Publisher(MQ):
             #threshold = 30 # 30s for testing
             current = self.get_state(address_int, name, 0)
             #print('[time]', datetime.fromtimestamp(t0), datetime.fromtimestamp(current), threshold)
-            if (t0 - threshold) > self.get_state(address_int, name, 0):
+            if (t0 - threshold) > current:
                 control.tx(xbee, address, 'time %d' % int(t0))
                 self.info('Sent "time" command')
                 self.set_state(address_int, **{name: t0})
