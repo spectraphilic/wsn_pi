@@ -8,6 +8,7 @@ Install system wide requirements::
   $ sudo apt-get install supervisor
 
 Clone the wsn_pi repository::
+
   $ git clone git@github.com:spectraphilic/wsn_pi.git
   $ cd wsn_pi
   $ nano config.ini
