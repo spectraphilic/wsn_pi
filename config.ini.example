@@ -11,5 +11,5 @@ log_level = debug
 key = 0123456789012345
 
 [wsn_data_django]
-url = http://hycamp.org/wsn/api/create/
+url = https://wsn.latice.eu/api/create/
 token = 
