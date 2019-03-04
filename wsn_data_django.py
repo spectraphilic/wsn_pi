@@ -7,6 +7,7 @@ import waspmote
 class Consumer(MQ):
 
     name = 'wsn_data_django'
+    prefetch_count = 20
 
     def __init__(self):
         super().__init__()
