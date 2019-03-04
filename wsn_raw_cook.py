@@ -36,7 +36,8 @@ class Consumer(mq.MQ):
         data = body['data']
         frame = waspmote.parse_frame(data, cipher_key=cipher_key)
         if frame is None:
-            raise ValueError("Error parsing %s" % base64.b64encode(data))
+            print(body)
+            raise ValueError("Parsing Error")
 
         frame = frame[0]
         if not frame['name'] and frame['type'] != EVENT_FRAME:

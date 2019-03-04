@@ -17,6 +17,7 @@ class Publisher(MQ):
 
     name = 'wsn_xbee'
     db_name = 'var/xbee.json'
+    prefetch_count = 20
 
     def pub_to(self):
         return ('wsn_raw', 'fanout', '')

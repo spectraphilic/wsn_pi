@@ -35,6 +35,9 @@ class MQ(object):
     bg_task = None # Background task
     db_name = None
 
+    # QOS
+    prefetch_count = None
+
     def __init__(self):
         self.connection = None
         self.channel = None
@@ -106,7 +109,11 @@ class MQ(object):
     def on_channel_open(self, channel):
         self.info('Channel open')
         self.channel = channel
-        channel.basic_qos(self.on_basic_qos_ok, prefetch_count=20)
+
+        # QOS
+        prefetch_count = self.prefetch_count
+        if prefetch_count is not None:
+            channel.basic_qos(self.on_basic_qos_ok, prefetch_count=prefetch_count)
 
         # Subscription
         if self.sub_to:
@@ -176,6 +183,21 @@ class MQ(object):
                 consumer(body)
             except Exception:
                 self.exception('Message handling failed')
+                #
+                # TODO
+                #
+                # - Send nack for errors that we know are temporary, they should
+                #   be retried after a delay.
+                #
+                # - Send nack(requeue=False) for permanent errors, they should
+                #   become "dead letters".
+                #
+                # - Don't do anything if we don't know. The message will remain
+                #   as unacknowledged from the point of view of the broker, until
+                #   the client is restarted.
+                #
+                # Be careful, sending nack may produce an infinite loop.
+                #
                 #channel.basic_nack(delivery_tag=method.delivery_tag)
             else:
                 channel.basic_ack(delivery_tag=method.delivery_tag)
