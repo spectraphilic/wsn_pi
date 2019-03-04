@@ -212,7 +212,7 @@ class MQ(object):
     #
     def init_logging(self):
         # Logging
-        log_format = '%(asctime)s - %(name)s - %(threadName)s - %(levelname)s - %(message)s'
+        log_format = '%(asctime)s pid=%(process)d %(threadName)s %(name)s %(levelname)s %(message)s'
         log_level = self.config.get('log_level', 'info').upper()
         log_level = logging.getLevelName(log_level)
         logging.basicConfig(format=log_format, level=log_level, stream=sys.stdout)
