@@ -176,7 +176,7 @@ class MQ(object):
                 consumer(body)
             except Exception:
                 self.exception('Message handling failed')
-                #channel.basic_reject(delivery_tag=method.delivery_tag)
+                #channel.basic_nack(delivery_tag=method.delivery_tag)
             else:
                 channel.basic_ack(delivery_tag=method.delivery_tag)
                 self.debug('Message received and handled')
