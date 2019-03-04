@@ -106,6 +106,7 @@ class MQ(object):
     def on_channel_open(self, channel):
         self.info('Channel open')
         self.channel = channel
+        channel.basic_qos(self.on_basic_qos_ok, prefetch_count=20)
 
         # Subscription
         if self.sub_to:
@@ -123,6 +124,9 @@ class MQ(object):
 
         # Update todo
         self.todo.remove('open_channel')
+
+    def on_basic_qos_ok(self, method):
+        self.info('QOS OK')
 
     def on_exchange_declare(self, exchange, queue, consumer=None):
         def callback(frame):
