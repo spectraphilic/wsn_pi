@@ -98,4 +98,9 @@ meshpiuio@raspberrypi:~/github/wsn_pi $ sudo supervisorctl
 Restart programs when issues arrise:
 ===================================
 meshpiuio@raspberrypi:~/github/wsn_pi $ sudo supervisorctl restart all
-    
+   
+Algorithm structure:
+===================
+
+.. figure:: meshpi_algo.pdf
+
