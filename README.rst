@@ -102,5 +102,5 @@ meshpiuio@raspberrypi:~/github/wsn_pi $ sudo supervisorctl restart all
 Algorithm structure:
 ===================
 
-.. figure:: meshpi_algo.pdf
+.. figure:: meshpi_frame_path.jpg
 
