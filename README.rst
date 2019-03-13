@@ -88,9 +88,14 @@ Define a policy, and verify::
 Check that the program is running:
 ===================================
 meshpiuio@raspberrypi:~/github/wsn_pi $ sudo supervisorctl
+
 wsn_data_archive                 RUNNING   pid 1063, uptime 1:20:56
 wsn_data_django                  RUNNING   pid 1054, uptime 1:20:57
 wsn_raw_archive                  RUNNING   pid 1084, uptime 1:20:52
 wsn_raw_cook                     RUNNING   pid 1064, uptime 1:20:56
 wsn_xbee                         RUNNING   pid 1075, uptime 1:20:55
+
+Restart programs when issues arrise:
+===================================
+meshpiuio@raspberrypi:~/github/wsn_pi $ sudo supervisorctl restart all
     
