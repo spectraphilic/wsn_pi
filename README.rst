@@ -83,23 +83,37 @@ Define a policy, and verify::
   # rabbitmqctl set_policy --apply-to exchanges wsn "^wsn$" '{"federation-upstream-set":"all"}'
   # rabbitmqctl list_policies
   # rabbitmqctl eval 'rabbit_federation_status:status().'
-  
-  
-Check that the program is running:
+
+
+Supervisor
 ===================================
-meshpiuio@raspberrypi:~/github/wsn_pi $ sudo supervisorctl
-::
+
+The programs are managed by Supervisor, use ``supervisorctl`` to control them.
+Supervisor runs as root, so you will need to run ``supervisorctl`` as root, or
+use sudo.
+
+The programs run in the foreground, Supervisor puts them in the background, and
+restarts them if they exit.
+
+Check that the programs are running::
+
+  meshpiuio@raspberrypi:~/github/wsn_pi $ sudo supervisorctl status
   wsn_data_archive                 RUNNING   pid 1063, uptime 1:20:56
   wsn_data_django                  RUNNING   pid 1054, uptime 1:20:57
   wsn_raw_archive                  RUNNING   pid 1084, uptime 1:20:52
   wsn_raw_cook                     RUNNING   pid 1064, uptime 1:20:56
   wsn_xbee                         RUNNING   pid 1075, uptime 1:20:55
 
-Restart programs when issues arrise:
-===================================
-meshpiuio@raspberrypi:~/github/wsn_pi $ sudo supervisorctl restart all
-   
-Algorithm structure:
+Restart programs when issues arise::
+
+  meshpiuio@raspberrypi:~/github/wsn_pi $ sudo supervisorctl restart all
+
+Enter the supervisorctl shell:
+
+  meshpiuio@raspberrypi:~/github/wsn_pi $ sudo supervisorctl status
+
+
+Algorithm structure
 ===================
 
 .. figure:: meshpi_frame_path.jpg
