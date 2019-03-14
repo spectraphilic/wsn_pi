@@ -67,6 +67,7 @@ SENSORS = {
     212: (b'TMP102', 'f', ['tmp_temperature']),
     213: (b'VL53L1X', 'n', ['vl_distance']),
     214: (b'MB73XX', 'n', ['mb_distance']),
+    215: (b'ATMOS', 'ffffff', ['wind_speed', 'wind_dir', 'wind_gust', 'wind_temp', 'wind_x', 'wind_y']),
 }
 
 
