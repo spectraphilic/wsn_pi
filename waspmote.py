@@ -58,6 +58,7 @@ SENSORS = {
     202: ('fff', ['ds2_meridional', 'ds2_zonal', 'ds2_gust']), # Legacy (DS-2, see 208)
     203: ('n', ['ds1820'], post_ds1820),                 # DS18B20 string, array of temperatures
     204: ('ww', ['mb_median', 'mb_sd']),                 # Legacy (MB73XX, see 214)
+    205: ('uf', ['gps_satellites', 'gps_accuracy']),     # GPS number of satellites and (horizontal) accuracy
     206: ('f', ['volts']),                               # Battery level volts
     207: ('fffuf', ['precip_abs', 'precip_dif', 'precip_int_h', 'precip_type', 'precip_int_min']), # WS-100
     208: ('ffffff', ['ds2_speed', 'ds2_dir', 'ds2_temp', 'ds2_meridional', 'ds2_zonal', 'ds2_gust']), # DS-2 (wind)
@@ -68,7 +69,6 @@ SENSORS = {
     213: ('n', ['vl_distance']),                         # VL53L1X distance
     214: ('n', ['mb_distance']),                         # MB73XX array of distances
     215: ('ffffff', ['wind_speed', 'wind_dir', 'wind_gust', 'wind_temp', 'wind_x', 'wind_y']), # ATMOS (wind)
-    216: ('f', ['gps_accuracy']),                        # GPS (horizontal) accuracy
 }
 
 
