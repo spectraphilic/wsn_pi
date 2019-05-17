@@ -12,18 +12,24 @@ import struct
 from Crypto.Cipher import AES
 
 
-def post_noop(value):
+def post_noop(name, value):
     return value
 
-def post_acc(value):
+def post_acc(name, value):
     if (value > 1000): value = 1000
     if (value < -1000): value = -1000
     return (180/math.pi) * math.asin(value/1000)
 
-def post_ds1820(value):
+def post_ds1820(name, value):
     #f = lambda x: x if (-100 < x < 100) else None # None if out of range
     #values = [f(value / 16) for value in values]
     return [value / 16 for value in value]
+
+def post_ctd10(name, value):
+    if name == 'ctd_temp':
+        return value / 10
+
+    return value
 
 
 """
@@ -69,6 +75,7 @@ SENSORS = {
     213: ('n', ['vl_distance']),                         # VL53L1X distance
     214: ('n', ['mb_distance']),                         # MB73XX array of distances
     215: ('ffffff', ['wind_speed', 'wind_dir', 'wind_gust', 'wind_temp', 'wind_x', 'wind_y']), # ATMOS (wind)
+    216: ('jjk', ['ctd_depth', 'ctd_temp', 'ctd_cond'], post_ctd10), # CTD-10
 }
 
 
@@ -227,9 +234,15 @@ def parse_frame(src, cipher_key=None):
             if c == 'f':
                 value = struct.unpack_from("f", line)[0]
                 line = line[4:]
+            elif c == 'i':
+                value = struct.unpack_from("b", line)[0]
+                line = line[1:]
             elif c == 'j':
                 value = struct.unpack_from("h", line)[0]
                 line = line[2:]
+            elif c == 'k':
+                value = struct.unpack_from("i", line)[0]
+                line = line[4:]
             elif c == 'u':
                 value = struct.unpack_from("B", line)[0]
                 line = line[1:]
@@ -264,7 +277,7 @@ def parse_frame(src, cipher_key=None):
 
                 value = frame.get(name, []) + values
 
-            frame[name] = post(value)
+            frame[name] = post(name, value)
 
     return frame, rest
 
