@@ -31,6 +31,24 @@ def post_ctd10(name, value):
 
     return value
 
+def post_ds2(name, value):
+    if name == 'ds2_temp':
+        return value * 10
+    elif name in {'ds2_speed', 'ds2_meridional', 'ds2_zonal', 'ds2_gust'}:
+        return value * 100
+
+    # ds2_dir
+    return value
+
+def post_atmos(name, value):
+    if name in {'wind_temp', 'wind_x', 'wind_y'}:
+        return value * 10
+    elif name in {'wind_speed', 'wind_gust'}:
+        return value * 100
+
+    # wind_dir
+    return value
+
 
 """
 f - float
@@ -60,22 +78,28 @@ SENSORS = {
      91: ('f', ['altitude']),                            # GPS altitude
     123: ('w', ['tst']),                                 # Time stamp (epoch)
     200: ('fff', ['ctd_depth', 'ctd_temp', 'ctd_cond']), # CTD-10
-    201: ('fff', ['ds2_speed', 'ds2_dir', 'ds2_temp']),  # Legacy (DS-2, see 208)
-    202: ('fff', ['ds2_meridional', 'ds2_zonal', 'ds2_gust']), # Legacy (DS-2, see 208)
+    201: ('fff', ['ds2_speed', 'ds2_dir', 'ds2_temp']),  # Legacy (DS-2, see 217)
+    202: ('fff', ['ds2_meridional', 'ds2_zonal', 'ds2_gust']), # Legacy (DS-2, see 217)
     203: ('n', ['ds1820'], post_ds1820),                 # DS18B20 string, array of temperatures
     204: ('ww', ['mb_median', 'mb_sd']),                 # Legacy (MB73XX, see 214)
     205: ('uf', ['gps_satellites', 'gps_accuracy']),     # GPS number of satellites and (horizontal) accuracy
     206: ('f', ['volts']),                               # Battery level volts
     207: ('fffuf', ['precip_abs', 'precip_dif', 'precip_int_h', 'precip_type', 'precip_int_min']), # WS-100
-    208: ('ffffff', ['ds2_speed', 'ds2_dir', 'ds2_temp', 'ds2_meridional', 'ds2_zonal', 'ds2_gust']), # DS-2 (wind)
+    208: ('ffffff', ['ds2_speed', 'ds2_dir', 'ds2_temp', # Legacy (DS-2, see 217)
+                     'ds2_meridional', 'ds2_zonal', 'ds2_gust']),
     209: ('fff', ['int_tc', 'int_hum', 'int_pres']),     # BME internal 0x76
     210: ('fff', ['bme_tc', 'bme_hum', 'bme_pres']),     # BME external 0x77
     211: ('ff', ['mlx_object', 'mlx_ambient']),          # MLX90614 temperature
     212: ('f', ['tmp_temperature']),                     # TMP102 temperature
     213: ('n', ['vl_distance']),                         # VL53L1X distance
     214: ('n', ['mb_distance']),                         # MB73XX array of distances
-    215: ('ffffff', ['wind_speed', 'wind_dir', 'wind_gust', 'wind_temp', 'wind_x', 'wind_y']), # ATMOS (wind)
+    215: ('ffffff', ['wind_speed', 'wind_dir',           # Legacy (ATMOS, see 218)
+                     'wind_gust', 'wind_temp', 'wind_x', 'wind_y']),
     216: ('jjk', ['ctd_depth', 'ctd_temp', 'ctd_cond'], post_ctd10), # CTD-10
+    217: ('jjjjjj', ['ds2_speed', 'ds2_dir', 'ds2_temp', # DS-2 (wind)
+                     'ds2_meridional', 'ds2_zonal', 'ds2_gust'], post_ds2),
+    218: ('jjjjii', ['wind_speed', 'wind_dir',           # ATMOS (wind)
+                     'wind_gust', 'wind_temp', 'wind_x', 'wind_y'], post_atmos),
 }
 
 
