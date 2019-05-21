@@ -62,7 +62,7 @@ def post_atmos_old(name, value):
         return round(value * 100) / 100
 
     # wind_dir
-    return round(value * 10) / 10
+    return value
 
 def post_atmos(name, value):
     if name in {'wind_temp', 'wind_x', 'wind_y'}:
@@ -71,7 +71,7 @@ def post_atmos(name, value):
         return value / 100
 
     # wind_dir
-    return value / 10
+    return value
 
 
 """
