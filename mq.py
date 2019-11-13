@@ -7,6 +7,7 @@ import signal
 import sys
 
 import pika
+import requests.exceptions
 
 
 class MQ(object):
@@ -181,6 +182,9 @@ class MQ(object):
                 body = body.decode()
                 body = json.loads(body)
                 consumer(body)
+            except requests.exceptions.ReadTimeout:
+                self.warning('requests.exceptions.ReadTimeout (will retry)')
+                channel.basic_nack(delivery_tag=method.delivery_tag)
             except Exception:
                 self.exception('Message handling failed')
                 #
