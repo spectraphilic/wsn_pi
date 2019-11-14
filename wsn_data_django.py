@@ -1,6 +1,6 @@
 import requests
 
-from mq import MQ
+from mq import MQ, Pause
 import waspmote
 
 
@@ -26,7 +26,17 @@ class Consumer(MQ):
         # guarantees that we'll finish below 60s, so there's room for
         # improvement.
         timeout = (5, 30)
-        response = self.session.post(self.url, json=json, headers=self.headers, timeout=timeout)
+        try:
+            response = self.session.post(
+                self.url,
+                json=json,
+                headers=self.headers,
+                timeout=timeout
+            )
+        except requests.exceptions.ReadTimeout:
+            self.warning('requests.exceptions.ReadTimeout (pause)')
+            raise Pause(5*60)
+
         status = response.status_code
         assert status == 201, '{} {}'.format(status, response.json())
 

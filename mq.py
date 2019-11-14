@@ -7,7 +7,71 @@ import signal
 import sys
 
 import pika
-import requests.exceptions
+
+
+class Pause(Exception):
+
+    def __init__(self, time):
+        self.time = time
+
+
+class Consumer:
+
+    def __init__(self, mq, queue, consumer):
+        self.mq = mq
+        self.queue = queue
+        self.consumer = consumer
+
+    def __call__(self, channel, method, header, body):
+        consumer = self.consumer
+
+        try:
+            body = body.decode()
+            body = json.loads(body)
+            consumer(body)
+        except Pause as exc:
+            self.mq.info('Requeue message and pause consumer')
+            channel.basic_nack(delivery_tag=method.delivery_tag) # Requeue
+            self.__pause(channel, exc.time)
+#       except Retry:
+#           # XXX For some temporary errors, we should retry after some time,
+#           # ideally with exponential backoff
+#           # See https://m.alphasights.com/exponential-backoff-with-rabbitmq-78386b9bec81
+#           #channel.basic_nack(delivery_tag=method.delivery_tag)
+#       except Reject:
+#           # TODO For permanent errors, send nack(requeue=False), they should
+#           # become "dead letters"
+        except Exception:
+            # For unexpected errors, we do nothing. The message will stay in
+            # the queue and only retried when the program is restarted.
+            self.mq.exception('Message handling failed')
+        else:
+            channel.basic_ack(delivery_tag=method.delivery_tag)
+            self.mq.debug('Message received and handled')
+
+    def start(self):
+        channel = self.mq.channel
+        queue = self.queue
+        tag = self.mq.name
+
+        cb = self
+        channel.basic_consume(cb, queue=queue, consumer_tag=tag)
+        signal.signal(signal.SIGALRM, signal.SIG_DFL)
+
+    def pause(self, time):
+        channel = self.mq.channel
+        tag = self.mq.name
+
+        cb = self.on_cancel_ok
+        channel.basic_cancel(cb, consumer_tag=tag)
+        signal.signal(signal.SIGALRM, self.resume)
+        signal.alarm(time)
+
+    def resume(self, signum, frame):
+        self.start()
+
+    def on_cancel_ok(self, *args, **kw):
+        self.mq.info('CancelOK')
 
 
 class MQ(object):
@@ -166,46 +230,12 @@ class MQ(object):
         def callback(frame):
             self.info('Bound exchange=%s queue=%s', exchange, queue)
             if consumer:
-                cb = self.on_message(consumer)
-                self.channel.basic_consume(cb, queue=queue)
+                Consumer(self, queue, consumer).start()
 
             # Update todo
             self.todo.remove('bind_queue_%s' % queue)
             if not self.todo:
                 self.done()
-
-        return callback
-
-    def on_message(self, consumer):
-        def callback(channel, method, header, body):
-            try:
-                body = body.decode()
-                body = json.loads(body)
-                consumer(body)
-            except requests.exceptions.ReadTimeout:
-                self.warning('requests.exceptions.ReadTimeout (will retry)')
-                channel.basic_nack(delivery_tag=method.delivery_tag)
-            except Exception:
-                self.exception('Message handling failed')
-                #
-                # TODO
-                #
-                # - Send nack for errors that we know are temporary, they should
-                #   be retried after a delay.
-                #
-                # - Send nack(requeue=False) for permanent errors, they should
-                #   become "dead letters".
-                #
-                # - Don't do anything if we don't know. The message will remain
-                #   as unacknowledged from the point of view of the broker, until
-                #   the client is restarted.
-                #
-                # Be careful, sending nack may produce an infinite loop.
-                #
-                #channel.basic_nack(delivery_tag=method.delivery_tag)
-            else:
-                channel.basic_ack(delivery_tag=method.delivery_tag)
-                self.debug('Message received and handled')
 
         return callback
 
