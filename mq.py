@@ -21,10 +21,14 @@ class Consumer:
         self.mq = mq
         self.queue = queue
         self.consumer = consumer
+        self.paused = True
 
     def __call__(self, channel, method, header, body):
-        consumer = self.consumer
+        if self.paused:
+            self.mq.info('Paused, skip message')
+            return
 
+        consumer = self.consumer
         try:
             body = body.decode()
             body = json.loads(body)
@@ -50,6 +54,8 @@ class Consumer:
             self.mq.debug('Message received and handled')
 
     def start(self):
+        self.paused = False
+
         channel = self.mq.channel
         queue = self.queue
         tag = self.mq.name
@@ -59,6 +65,8 @@ class Consumer:
         signal.signal(signal.SIGALRM, signal.SIG_DFL)
 
     def pause(self, time):
+        self.paused = True
+
         channel = self.mq.channel
         tag = self.mq.name
 
