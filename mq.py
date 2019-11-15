@@ -36,7 +36,7 @@ class Consumer:
         except Pause as exc:
             self.mq.info('Requeue message and pause consumer')
             channel.basic_nack(delivery_tag=method.delivery_tag) # Requeue
-            self.__pause(channel, exc.time)
+            self.pause(exc.time)
 #       except Retry:
 #           # XXX For some temporary errors, we should retry after some time,
 #           # ideally with exponential backoff

@@ -1,4 +1,5 @@
 import requests
+from requests import exceptions
 
 from mq import MQ, Pause
 import waspmote
@@ -33,8 +34,8 @@ class Consumer(MQ):
                 headers=self.headers,
                 timeout=timeout
             )
-        except requests.exceptions.ReadTimeout:
-            self.warning('requests.exceptions.ReadTimeout (pause)')
+        except (exceptions.ConnectionError, exceptions.ReadTimeout) as exc:
+            self.warning(str(exc))
             raise Pause(5*60)
 
         status = response.status_code
