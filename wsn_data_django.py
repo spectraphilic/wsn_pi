@@ -1,5 +1,3 @@
-from json.decoder import JSONDecodeError
-
 import requests
 from requests import exceptions
 
@@ -42,15 +40,8 @@ class Consumer(MQ):
 
         # Check response
         status = response.status_code
-
-        try:
-            json = response.json()
-        except JSONDecodeError:
-            text = response.text
-            print('Unexpected response status={} text={}'.format(status, text))
-            raise
-
-        assert status == 201, '{} {}'.format(status, json)
+        text = response.text
+        assert status == 201, 'Unexpected status=%s text=%s' % (status, text)
 
 
 if __name__ == '__main__':
