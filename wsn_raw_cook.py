@@ -35,10 +35,16 @@ class Consumer(mq.MQ):
         # Skip source_addr, id and options
         data = body['data']
         while data:
-            frame, data = waspmote.parse_frame(data, cipher_key=cipher_key)
-            if frame is None:
+            try:
+                frame, data = waspmote.parse_frame(data, cipher_key=cipher_key)
+            except waspmote.FrameNotFound:
+                break
+            except waspmote.ParseError:
+                # FIXME A package may contain several frames, if at least 1
+                # frame has been processed, drop this event from the queue and
+                # publish a new event with the remaining part.
                 print(body)
-                raise ValueError("Parsing Error")
+                raise
 
             if not frame['name'] and frame['type'] != EVENT_FRAME:
                 frame['name'] = self.get_state(source_addr, 'name', '')
