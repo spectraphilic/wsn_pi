@@ -1,5 +1,5 @@
-pika==0.12.0
-pycryptodome==3.9.4
-pyserial==3.4
-requests==2.22.0
+pika==0.13.1
+pycryptodome==3.9.9
+pyserial==3.5
+requests==2.25.1
 xbee==2.3.2

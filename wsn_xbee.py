@@ -7,7 +7,7 @@ import struct
 import time
 
 from serial import Serial
-from xbee import DigiMesh
+import xbee
 
 import control
 from mq import MQ
@@ -54,7 +54,7 @@ class Publisher(MQ):
                 data = base64.b64encode(data).decode()
                 if data == self.get_state(address_int, 'data'):
                     self.info('Dup frame detected and skipped')
-                    control.tx(xbee, address, 'ack')
+                    control.tx(mod, address, 'ack')
                     continue
                 self.set_state(address_int, data=data)
 
@@ -72,7 +72,7 @@ class Publisher(MQ):
 
             # Send ACK to mote
             if frame_id == 'rx':
-                control.tx(xbee, address, 'ack')
+                control.tx(mod, address, 'ack')
 
             # Sync time (once every 6h)
             name = 'cmd_time'
@@ -81,7 +81,7 @@ class Publisher(MQ):
             current = self.get_state(address_int, name, 0)
             #print('[time]', datetime.fromtimestamp(t0), datetime.fromtimestamp(current), threshold)
             if (t0 - threshold) > current:
-                control.tx(xbee, address, 'time %d' % int(t0))
+                control.tx(mod, address, 'time %d' % int(t0))
                 self.info('Sent "time" command')
                 self.set_state(address_int, **{name: t0})
 
@@ -101,18 +101,25 @@ class Publisher(MQ):
 
 
 @contextlib.contextmanager
-def xbee_manager(serial, callback, error_callback=None):
+def xbee_manager(cls, serial, callback, error_callback=None):
+    cls = {
+        'xbee': xbee.XBee,
+        'zigbee': xbee.ZigBee,
+        'digimesh': xbee.DigiMesh,
+    }.get(cls, xbee.DigiMesh)
+
     try:
         # Starts XBee thread
-        xbee = DigiMesh(serial, callback=callback, error_callback=error_callback)
-        yield xbee
+        mod = cls(serial, callback=callback, error_callback=error_callback)
+        yield mod
     finally:
-        xbee.halt() # Stop XBee thread
+        mod.halt() # Stop XBee thread
 
 if __name__ == '__main__':
     queue = Queue()
     with Publisher() as publisher:
+        cls = publisher.config.get('class', 'digimesh')
         bauds = int(publisher.config.get('bauds', 9600))
         with Serial('/dev/serial0', bauds) as serial:
-            with xbee_manager(serial, publisher.xbee_cb, publisher.xbee_cb_error) as xbee:
+            with xbee_manager(cls, serial, publisher.xbee_cb, publisher.xbee_cb_error) as mod:
                 publisher.start()

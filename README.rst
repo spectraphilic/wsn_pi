@@ -3,9 +3,7 @@ Install
 
 Install system wide requirements::
 
-  $ sudo apt-get install python3-venv
-  $ sudo apt-get install rabbitmq-server
-  $ sudo apt-get install supervisor
+  $ sudo apt install python3-venv rabbitmq-server supervisor
 
 Clone the wsn_pi repository::
 

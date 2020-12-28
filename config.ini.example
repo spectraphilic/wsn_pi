@@ -3,6 +3,7 @@ bauds = 115200
 log_level = info
 
 [wsn_xbee]
+class = digimesh
 log_level = debug
 
 [wsn_raw_archive]
