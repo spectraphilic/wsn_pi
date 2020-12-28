@@ -3,7 +3,6 @@ import base64
 import contextlib
 #from datetime import datetime
 from queue import Queue, Empty
-import struct
 import time
 
 from serial import Serial
@@ -41,13 +40,13 @@ class Publisher(MQ):
                 continue
 
             # Log
-            address = frame['source_addr'] # used in control.tx/remote_at
-            address_int = struct.unpack(">Q", address)[0] # Key in db
+            address, _, address_int = self.get_address(frame)
+            assert address is not None
             self.debug('FRAME {} from {}'.format(frame, address_int))
 
             # Skip duplicates
             if frame_id == 'rx':
-                data = frame['data']
+                data = self.get_data(frame)
                 if data == b'ping':
                     self.info('ping')
                     continue

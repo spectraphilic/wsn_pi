@@ -2,6 +2,9 @@
 import base64
 import struct
 
+import cbor2
+
+# Project
 import mq
 import waspmote
 
@@ -33,7 +36,16 @@ class Consumer(mq.MQ):
             cipher_key = cipher_key.encode()
 
         # Skip source_addr, id and options
-        data = body['data']
+        data = self.get_data(body)
+        try:
+            data = cbor2.loads(data)
+        except ValueError:
+            pass
+        else:
+            # TODO Not yet implemented
+            print('CBOR', data)
+            return
+
         while data:
             try:
                 frame, data = waspmote.parse_frame(data, cipher_key=cipher_key)
@@ -90,14 +102,9 @@ class Consumer(mq.MQ):
                 body[k] = base64.b64decode(body[k])
 
         # Decode: source_addr
-        source_addr = body.get('source_addr')
-        if source_addr is None:
-            # Support source_addr_long so we're able to parse old raw frames
-            source_addr = body.get('source_addr_long')
-
-        if source_addr is not None:
-            assert len(source_addr) == 8
-            body['source_addr'] = struct.unpack(">Q", source_addr)[0]
+        address, _, address_int = self.get_address(body)
+        if address is not None:
+            body['source_addr'] = address_int
 
         # Handle
         frame_type = body['id']

@@ -3,7 +3,6 @@ import base64
 from datetime import date
 import json
 import os
-import struct
 
 from mq import MQ
 
@@ -18,12 +17,10 @@ class Consumer(MQ):
     def get_dirname(self, body):
         frame_type = body['id']
 
-        source_addr = body.get('source_addr')
-        if source_addr is not None:
-            source_addr = base64.b64decode(source_addr)
-            assert len(source_addr) == 8
-            source_addr = struct.unpack(">Q", source_addr)[0]
-            return '%016X' % source_addr
+        address, n, address_int = self.get_address(body)
+        if address is not None:
+            fmt = {2: '%04X', 8: '%016X'}[n]
+            return fmt % address_int
 
         return frame_type
 

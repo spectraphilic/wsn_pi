@@ -4,6 +4,7 @@ import copy
 import json
 import logging
 import signal
+import struct
 import sys
 
 # Requirements
@@ -345,3 +346,31 @@ class MQ(object):
     def __exit__(self, exc_type, exc_value, traceback):
         self.stop()
         logging.shutdown()
+
+
+    #
+    # Helpers
+    #
+    def get_address(self, frame):
+        address = frame.get('source_addr_long')
+        if address is None:
+            address = frame.get('source_addr')
+            if address is None:
+                return None, None, None
+
+        n = len(address)
+        if n == 2:
+            address_int = struct.unpack(">H", address)[0]
+        elif n == 8:
+            address_int = struct.unpack(">Q", address)[0]
+        else:
+            raise ValueError('Unexpected address of %d bytes length: %s' % (n, repr(address)))
+
+        return address, n, address_int
+
+    def get_data(self, frame):
+        data = frame.get('data')
+        if data is None:
+            data = frame['rf_data']
+
+        return data
