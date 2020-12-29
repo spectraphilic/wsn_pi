@@ -17,23 +17,7 @@ def get_config(name):
 
 
 def get_device(port, bauds):
-    # Auto discover protocol
-    device = devices.XBeeDevice(port, bauds)
-    try:
-        device.open()
-        protocol = device.get_protocol()
-    finally:
-        device.close()
-
-    # Load device class
-    device = {
-        0: devices.ZigBeeDevice, # ZigBee
-        1: devices.Raw802Device, # 802.15.4
-        3: devices.DigiMeshDevice, # DigiMesh
-    }[protocol.code]
-
-    # Ok
-    return device(port, bauds)
+    return devices.XBeeDevice(port, bauds)
 
 
 def get_address(remote):
