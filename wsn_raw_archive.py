@@ -1,5 +1,4 @@
 # Standard Library
-import base64
 from datetime import date
 import json
 import os
@@ -17,7 +16,7 @@ class Consumer(MQ):
     def get_dirname(self, body):
         frame_type = body['id']
 
-        address, n, address_int = self.get_address(body)
+        address, n, address_int = self.get_address(body, decode=True)
         if address is not None:
             fmt = {2: '%04X', 8: '%016X'}[n]
             return fmt % address_int

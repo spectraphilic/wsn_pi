@@ -1,5 +1,5 @@
 # Standard Library
-from configparser import RawConfigParser as ConfigParser
+import base64
 import copy
 import json
 import logging
@@ -351,12 +351,15 @@ class MQ(object):
     #
     # Helpers
     #
-    def get_address(self, frame):
+    def get_address(self, frame, decode=False):
         address = frame.get('source_addr_long')
         if address is None:
             address = frame.get('source_addr')
             if address is None:
                 return None, None, None
+
+        if decode:
+            address = base64.b64decode(address)
 
         n = len(address)
         if n == 2:

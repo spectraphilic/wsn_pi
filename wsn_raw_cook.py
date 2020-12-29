@@ -37,15 +37,21 @@ class Consumer(mq.MQ):
 
         # Skip source_addr, id and options
         data = self.get_data(body)
-        try:
-            data = cbor2.loads(data)
-        except ValueError:
-            pass
-        else:
-            # TODO Not yet implemented
-            print('CBOR', data)
+
+        # RIOT frames (cbor)
+        self.config.get('format', 'waspmote')
+        if format == 'riot':
+            try:
+                data = cbor2.loads(data)
+            except ValueError:
+                pass
+            else:
+                # TODO Not yet implemented
+                print('CBOR', data)
+
             return
 
+        # Waspmote frames
         while data:
             try:
                 frame, data = waspmote.parse_frame(data, cipher_key=cipher_key)
@@ -102,7 +108,7 @@ class Consumer(mq.MQ):
                 body[k] = base64.b64decode(body[k])
 
         # Decode: source_addr
-        address, _, address_int = self.get_address(body)
+        address, _, address_int = self.get_address(body, decode=True)
         if address is not None:
             body['source_addr'] = address_int
 
