@@ -61,7 +61,7 @@ class Consumer:
         tag = self.mq.name
 
         cb = self
-        channel.basic_consume(cb, queue=queue, consumer_tag=tag)
+        channel.basic_consume(queue, cb, consumer_tag=tag)
         signal.signal(signal.SIGALRM, signal.SIG_DFL)
 
     def pause(self, time):
@@ -71,7 +71,7 @@ class Consumer:
         tag = self.mq.name
 
         cb = self.on_cancel_ok
-        channel.basic_cancel(cb, consumer_tag=tag)
+        channel.basic_cancel(consumer_tag=tag, callback=cb)
         signal.signal(signal.SIGALRM, self.resume)
         signal.alarm(time)
 
@@ -166,7 +166,7 @@ class MQ(object):
 
     def on_connect_open(self, connection):
         self.info('Connection open')
-        connection.channel(self.on_channel_open)
+        connection.channel(on_open_callback=self.on_channel_open)
         # Update todo
         self.todo.add('open_channel')
         self.todo.remove('open_connection')
@@ -176,7 +176,7 @@ class MQ(object):
         self.connection = None
         sys.exit(1)
 
-    def on_connect_close(self, connection, reply_code, reply_text):
+    def on_connect_close(self, connection, exception):
         self.info('Connection closed')
 
     def on_channel_open(self, channel):
@@ -192,14 +192,14 @@ class MQ(object):
         if self.sub_to:
             exchange, exchange_type, queue, consumer = self.sub_to()
             cb = self.on_exchange_declare(exchange, queue, consumer)
-            channel.exchange_declare(cb, exchange, exchange_type, durable=True)
+            channel.exchange_declare(exchange, exchange_type, durable=True, callback=cb)
             self.todo.add('declare_exchange_%s' % exchange)
 
         # Publication
         if self.pub_to:
             exchange, exchange_type, queue = self.pub_to()
             cb = self.on_exchange_declare(exchange, queue)
-            channel.exchange_declare(cb, exchange, exchange_type, durable=True)
+            channel.exchange_declare(exchange, exchange_type, durable=True, callback=cb)
             self.todo.add('declare_exchange_%s' % exchange)
 
         # Update todo
@@ -213,7 +213,7 @@ class MQ(object):
             self.info('Exchange declared name=%s', exchange)
             if queue or consumer:
                 cb = self.on_queue_declare(exchange, queue, consumer)
-                self.channel.queue_declare(cb, queue, durable=True)
+                self.channel.queue_declare(queue, durable=True, callback=cb)
                 self.todo.add('declare_queue_%s' % queue)
 
             # Update todo
@@ -227,7 +227,7 @@ class MQ(object):
         def callback(frame):
             self.info('Queue declared name=%s', queue)
             cb = self.on_queue_bind(exchange, queue, consumer)
-            self.channel.queue_bind(cb, queue, exchange)
+            self.channel.queue_bind(queue, exchange, callback=cb)
             # Update todo
             self.todo.add('bind_queue_%s' % queue)
             self.todo.remove('declare_queue_%s' % queue)

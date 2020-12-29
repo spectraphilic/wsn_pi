@@ -1,4 +1,4 @@
-pika==0.13.1
+pika==1.1.0
 pycryptodome==3.9.9
 pyserial==3.5
 requests==2.25.1
