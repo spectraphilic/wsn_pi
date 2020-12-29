@@ -10,6 +10,7 @@ bauds = 115200
 [wsn_xbee]
 port = /dev/serial0
 bauds = 9600
+log_level = debug
 
 [wsn_raw_archive]
 

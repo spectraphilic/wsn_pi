@@ -9,18 +9,18 @@ https://cdn.sparkfun.com/learn/materials/29/22AT%20Commands.pdf
 
 # Standard Library
 import argparse
-from cmd import Cmd
+import cmd
 from datetime import datetime
 import signal
 import struct
 import time
 
-from serial import Serial
-from xbee import DigiMesh
+# Project
+import utils
+
 
 # Constants
 BAUDS = 9600
-#BAUDS = 115200
 
 # Xbee addresses
 BROADCAST = b'\x00\x00\x00\x00\x00\x00\xff\xff'
@@ -69,14 +69,18 @@ def remote_at(xbee, address, command, frame_ids={}):
     return frame_id
 
 
-def tx(xbee, address, data, frame_ids={}):
+def tx(device, remote, data, frame_ids={}):
+    address = utils.get_address(remote)
+
     # frame_id is required
     frame_id = frame_ids.setdefault(address, 1)
     frame_ids[address] = 1 if (frame_id == 255) else (frame_id + 1) # Next
     frame_id = bytearray([frame_id])
 
     # Send AT command
-    xbee.tx(dest_addr=address, data=data, frame_id=frame_id)
+    device.send_data_async(remote, data, 0)
+
+    #device.tx(dest_addr=address, data=data, frame_id=frame_id)
     return frame_id
 
 
@@ -120,13 +124,12 @@ def command(f):
     return wrapper
 
 
-class Control(Cmd):
+class Control(cmd.Cmd):
     prompt = '() '
     address = None
 
     def preloop(self):
-        self.serial = Serial('/dev/serial0', BAUDS)
-        self.xbee = DigiMesh(self.serial)
+        self.xbee = utils.get_device(BAUDS)
 
     def set_address(self, address):
         if address not in ADDRESSES:
@@ -173,8 +176,7 @@ if __name__ == '__main__':
     control.set_address(args.address)
     control.cmdloop()
 
-#   serial = Serial('/dev/serial0', BAUDS)
-#   xbee = DigiMesh(serial)
+#   xbee = utils.get_device(PORT)
 
 #   data = 'time %d' % int(time.time())
 #   data = b'hello'

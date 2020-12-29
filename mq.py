@@ -1,10 +1,8 @@
 # Standard Library
-import base64
 import copy
 import json
 import logging
 import signal
-import struct
 import sys
 
 # Requirements
@@ -267,7 +265,7 @@ class MQ(object):
             properties=properties,
             body=body,
         )
-        self.debug('Message published')
+        self.info('Message published')
 
     #
     # Logging helpers
@@ -306,12 +304,9 @@ class MQ(object):
 
         try:
             with open(name) as db_file:
-                state = json.load(db_file)
+                return json.load(db_file)
         except FileNotFoundError:
             return {}
-
-        # JSON keys are always strings, but we use ints
-        return {int(key): value for key, value in state.items()}
 
     def get_state(self, addr, key, default=None):
         """
@@ -320,7 +315,7 @@ class MQ(object):
         return self.state.get(addr, {}).get(key, default)
 
     def set_state(self, source_addr, **kw):
-        assert type(source_addr) is int
+        assert type(source_addr) is str
 
         db_new = copy.deepcopy(self.state)
         db_new.setdefault(source_addr, {}).update(kw)
@@ -346,34 +341,3 @@ class MQ(object):
     def __exit__(self, exc_type, exc_value, traceback):
         self.stop()
         logging.shutdown()
-
-
-    #
-    # Helpers
-    #
-    def get_address(self, frame, decode=False):
-        address = frame.get('source_addr_long')
-        if address is None:
-            address = frame.get('source_addr')
-            if address is None:
-                return None, None, None
-
-        if decode:
-            address = base64.b64decode(address)
-
-        n = len(address)
-        if n == 2:
-            address_int = struct.unpack(">H", address)[0]
-        elif n == 8:
-            address_int = struct.unpack(">Q", address)[0]
-        else:
-            raise ValueError('Unexpected address of %d bytes length: %s' % (n, repr(address)))
-
-        return address, n, address_int
-
-    def get_data(self, frame):
-        data = frame.get('data')
-        if data is None:
-            data = frame['rf_data']
-
-        return data

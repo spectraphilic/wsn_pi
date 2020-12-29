@@ -1,7 +1,8 @@
 # Standard Library
 import base64
-import struct
+#import struct
 
+# Requirements
 import cbor2
 
 # Project
@@ -36,18 +37,20 @@ class Consumer(mq.MQ):
             cipher_key = cipher_key.encode()
 
         # Skip source_addr, id and options
-        data = self.get_data(body)
+        data = body['data']
 
         # RIOT frames (cbor)
-        self.config.get('format', 'waspmote')
-        if format == 'riot':
+        fmt = self.config.get('format', 'waspmote')
+        self.info('rx %s %s', fmt, data)
+        if fmt == 'riot':
             try:
                 data = cbor2.loads(data)
             except ValueError:
+                self.error('Failed to load CBOR data')
                 pass
             else:
                 # TODO Not yet implemented
-                print('CBOR', data)
+                self.info('CBOR %s', data)
 
             return
 
@@ -71,52 +74,47 @@ class Consumer(mq.MQ):
             self.publish(frame)
             self.set_state(source_addr, serial=frame['serial'], name=frame['name'])
 
-    def remote_at_response(self, body):
-        """
-        {'command': b'DB',
-         'body_id': b'\x06',
-         'id': 'remote_at_response',
-         'parameter': b'6',
-         'source_addr': b'\x00\x13\xa2\x00A\x05\xd8\xcf',
-         'status': b'\x00'}
-        """
-        if body['status'] != b'\x00':
-            self.warning('REMOTE_AT Response failed %s', body)
-            return
+#   def remote_at_response(self, body):
+#       """
+#       {'command': b'DB',
+#        'body_id': b'\x06',
+#        'id': 'remote_at_response',
+#        'parameter': b'6',
+#        'source_addr': b'\x00\x13\xa2\x00A\x05\xd8\xcf',
+#        'status': b'\x00'}
+#       """
+#       if body['status'] != b'\x00':
+#           self.warning('REMOTE_AT Response failed %s', body)
+#           return
 
-        if body['command'] != b'DB':
-            self.warning('UNEXPECTED command %s', body['command'])
-            return
+#       if body['command'] != b'DB':
+#           self.warning('UNEXPECTED command %s', body['command'])
+#           return
 
-        source_addr = body['source_addr']
-        received = body['received']
-        self.publish({
-            'source_addr_long': source_addr,
-            'name': self.get_state(source_addr, 'name', ''),
-            'received': received,
-            'serial': self.get_state(source_addr, 'serial'),
-            'rssi': - struct.unpack('B', body['parameter'])[0],
-        })
+#       source_addr = body['source_addr']
+#       received = body['received']
+#       self.publish({
+#           'source_addr_long': source_addr,
+#           'name': self.get_state(source_addr, 'name', ''),
+#           'received': received,
+#           'serial': self.get_state(source_addr, 'serial'),
+#           'rssi': - struct.unpack('B', body['parameter'])[0],
+#       })
 
-        # Update db
-        self.set_state(source_addr, rssi_tst=received)
+#       # Update db
+#       self.set_state(source_addr, rssi_tst=received)
 
     def handle_message(self, body):
         # Decode
         for k in body.keys():
-            if k not in ('id', 'received'):
+            if k not in ('id', 'received', 'source_addr'):
                 body[k] = base64.b64decode(body[k])
-
-        # Decode: source_addr
-        address, _, address_int = self.get_address(body, decode=True)
-        if address is not None:
-            body['source_addr'] = address_int
 
         # Handle
         frame_type = body['id']
         handler = {
             'rx': self.rx,
-            'remote_at_response': self.remote_at_response,
+#           'remote_at_response': self.remote_at_response,
         }.get(frame_type)
 
         if handler is None:

@@ -14,14 +14,7 @@ class Consumer(MQ):
         return ('wsn_raw', 'fanout', self.name, self.handle_message)
 
     def get_dirname(self, body):
-        frame_type = body['id']
-
-        address, n, address_int = self.get_address(body, decode=True)
-        if address is not None:
-            fmt = {2: '%04X', 8: '%016X'}[n]
-            return fmt % address_int
-
-        return frame_type
+        return body['source_addr']
 
     def handle_message(self, body):
         # Create parent directory
