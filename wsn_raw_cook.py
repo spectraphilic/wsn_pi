@@ -47,10 +47,15 @@ class Consumer(mq.MQ):
                 data = cbor2.loads(data)
             except ValueError:
                 self.error('Failed to load CBOR data')
-                pass
             else:
                 # TODO Not yet implemented
                 self.info('CBOR %s', data)
+                frame = {
+                    'received': body['received'],
+                    'source_addr': body['source_addr'],
+                    'data': data, # XXX
+                }
+                self.publish(frame)
 
             return
 
@@ -70,7 +75,7 @@ class Consumer(mq.MQ):
             if not frame['name'] and frame['type'] != EVENT_FRAME:
                 frame['name'] = self.get_state(source_addr, 'name', '')
             frame['received'] = body['received']
-            frame['source_addr_long'] = source_addr
+            frame['source_addr'] = source_addr
             self.publish(frame)
             self.set_state(source_addr, serial=frame['serial'], name=frame['name'])
 
@@ -94,7 +99,7 @@ class Consumer(mq.MQ):
 #       source_addr = body['source_addr']
 #       received = body['received']
 #       self.publish({
-#           'source_addr_long': source_addr,
+#           'source_addr': source_addr,
 #           'name': self.get_state(source_addr, 'name', ''),
 #           'received': received,
 #           'serial': self.get_state(source_addr, 'serial'),

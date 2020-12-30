@@ -375,7 +375,7 @@ def data_to_json(data):
     """
     # Tags
     tags = {}
-    for key in 'source_addr_long', 'serial', 'name':
+    for key in 'name', 'serial', 'source_addr', 'source_addr_long':
         value = data.pop(key, None)
         if value is not None:
             tags[key] = value

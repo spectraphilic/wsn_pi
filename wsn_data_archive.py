@@ -14,11 +14,11 @@ class Consumer(MQ):
         return ('wsn_data', 'fanout', self.name, self.handle_message)
 
     def get_dirname(self, body):
-        source_addr = body.get('source_addr_long')
+        source_addr = body.get('source_addr')
         if source_addr is None:
             return 'null'
 
-        return '%016X' % source_addr
+        return source_addr
 
     def handle_message(self, body):
         # Create parent directory

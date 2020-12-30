@@ -39,22 +39,26 @@ With the management plugin enabled, you can:
 - Go to http://localhost:15672/ and enter with username and password "guest".
 - Use the command line rabbitmqadmin
 
+XXX Do we need rabbitmq_management?
+
 
 RabbitMQ (command line)
 =======================
 
-::
+Informational::
 
-  # rabbitmqctl list_exchanges
-  # rabbitmqctl list_queues
-  # rabbitmqctl list_bindings
-  # rabbitmqctl list_connections
+  $ sudo rabbitmqctl list_exchanges
+  $ sudo rabbitmqctl list_queues
+  $ sudo rabbitmqctl list_bindings
+  $ sudo rabbitmqctl list_connections
 
-  # rabbitmqctl list_channels
-  # rabbitmqctl list_consumers
-  # rabbitmqctl status
+  $ sudo rabbitmqctl list_channels
+  $ sudo rabbitmqctl list_consumers
+  $ sudo rabbitmqctl status
 
-TODO Document rabbitmqadmin
+Maintenance::
+
+  $ sudo rabbitmqctl purge_queue <name>
 
 
 RabbitMQ: Federated Exchange (TODO)
