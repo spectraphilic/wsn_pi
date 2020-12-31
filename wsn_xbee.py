@@ -1,6 +1,5 @@
 # Standard Library
 import base64
-import contextlib
 #from datetime import datetime
 import time
 
@@ -63,21 +62,13 @@ class Publisher(MQ):
             self.set_state(address, **{name: t0})
 
 
-@contextlib.contextmanager
-def xbee_manager(config):
-    port = config.get('port', '/dev/serial0')
-    bauds = int(config.get('bauds', 9600))
-    device = utils.get_device(port, bauds)
-    try:
-        device.open()
-        yield device
-    finally:
-        if device.is_open():
-            device.close()
-
-
 if __name__ == '__main__':
     with Publisher() as publisher:
-        with xbee_manager(publisher.config) as device:
+        device = utils.get_device(publisher.config)
+        try:
+            device.open()
             device.add_data_received_callback(publisher.xbee_cb)
             publisher.start()
+        finally:
+            if device.is_open():
+                device.close()

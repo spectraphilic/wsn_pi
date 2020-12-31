@@ -2,11 +2,9 @@
 import base64
 #import struct
 
-# Requirements
-import cbor2
-
 # Project
 import mq
+import riot
 import waspmote
 
 
@@ -44,17 +42,15 @@ class Consumer(mq.MQ):
         self.info('rx %s %s', fmt, data)
         if fmt == 'riot':
             try:
-                data = cbor2.loads(data)
+                frame = riot.parse_frame(data)
             except ValueError:
                 self.error('Failed to load CBOR data')
             else:
-                # TODO Not yet implemented
-                self.info('CBOR %s', data)
-                frame = {
+                self.info('CBOR %s', frame)
+                frame.update({
                     'received': body['received'],
-                    'source_addr': body['source_addr'],
-                    'data': data, # XXX
-                }
+                    'source_addr': source_addr,
+                })
                 self.publish(frame)
 
             return

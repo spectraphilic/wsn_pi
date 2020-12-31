@@ -16,8 +16,20 @@ def get_config(name):
     return config
 
 
-def get_device(port, bauds):
-    return devices.XBeeDevice(port, bauds)
+def get_device(config):
+    port = config.get('port', '/dev/serial0')
+    bauds = int(config.get('bauds', 9600))
+
+#   device = config.get('device', 'digimesh')
+#   device = {
+#       '802': devices.Raw802Device,
+#       'zigbee': devices.ZigBeeDevice,
+#       'digimesh': devices.DigiMeshDevice,
+#   }[device]
+
+    device = devices.XBeeDevice
+
+    return device(port, bauds)
 
 
 def get_address(remote):
