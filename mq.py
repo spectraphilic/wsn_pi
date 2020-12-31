@@ -186,7 +186,7 @@ class MQ(object):
         # QOS
         prefetch_count = self.prefetch_count
         if prefetch_count is not None:
-            channel.basic_qos(self.on_basic_qos_ok, prefetch_count=prefetch_count)
+            channel.basic_qos(prefetch_count=prefetch_count, callback=self.on_basic_qos_ok)
 
         # Subscription
         if self.sub_to:
