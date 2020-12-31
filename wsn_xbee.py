@@ -17,16 +17,20 @@ class Publisher(MQ):
         return ('wsn_raw', 'fanout', '')
 
     def xbee_cb(self, message):
+        remote = message.remote_device
         t0 = time.time()
 
         # Ping
         data = message.data
+        self.info('RCV %s', data)
         if data == b'ping':
-            self.info('ping')
+            self.info('> ping')
+            msg = "pong %s" % int(time.time())
+            device.send_data_broadcast(msg)
+            self.info("< %s", msg)
             return
 
         # Remote / Address (hex)
-        remote = message.remote_device
         address = utils.get_address(remote)
         address = address.address.hex().upper()
 
