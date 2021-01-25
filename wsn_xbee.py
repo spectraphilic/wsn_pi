@@ -118,8 +118,10 @@ def xbee_manager(cls, serial, callback, error_callback=None):
 if __name__ == '__main__':
     queue = Queue()
     with Publisher() as publisher:
-        cls = publisher.config.get('class', 'digimesh')
-        bauds = int(publisher.config.get('bauds', 9600))
-        with Serial('/dev/serial0', bauds) as serial:
+        config = publisher.config
+        cls = config.get('class', 'digimesh')
+        bauds = int(config.get('bauds', 9600))
+        port = config.get('port', '/dev/serial0')
+        with Serial(port, bauds) as serial:
             with xbee_manager(cls, serial, publisher.xbee_cb, publisher.xbee_cb_error) as mod:
                 publisher.start()
