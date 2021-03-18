@@ -251,11 +251,11 @@ class MQ(object):
         self.info('Setup done.')
         # Background task
         if self.bg_task:
-            self.connection.add_timeout(1, self.bg_task_wrapper)
+            self.connection.ioloop.call_later(1, self.bg_task_wrapper)
 
     def bg_task_wrapper(self):
         self.bg_task()
-        self.connection.add_timeout(1, self.bg_task_wrapper)
+        self.connection.ioloop.call_later(1, self.bg_task_wrapper)
 
     #
     # Publisher
