@@ -254,8 +254,8 @@ class MQ(object):
             self.connection.ioloop.call_later(1, self.bg_task_wrapper)
 
     def bg_task_wrapper(self):
-        self.bg_task()
-        self.connection.ioloop.call_later(1, self.bg_task_wrapper)
+        delay = self.bg_task() or 1
+        self.connection.ioloop.call_later(delay, self.bg_task_wrapper)
 
     #
     # Publisher
