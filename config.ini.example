@@ -1,7 +1,9 @@
 [global]
+autostart = true
 log_level = info
 
 [wsn_usb]
+autostart = false
 port = /dev/ttyUSB0
 bauds = 115200
 

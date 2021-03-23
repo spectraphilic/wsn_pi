@@ -6,7 +6,11 @@ import logging
 import signal
 import sys
 
+# Requirements
 import pika
+
+# Project
+import utils
 
 
 class Pause(Exception):
@@ -117,19 +121,8 @@ class MQ(object):
         self.logger = logging.getLogger(self.name)
         self.started = False
         self.todo = set() # Used to know when the setup process is done
-
-        # Persistent state
-        self.state = self.load_state(self.db_name)
-
-        # Configuration
-        config = ConfigParser()
-        config.read('config.ini')
-        self.config = {}
-        for section in ['global', self.name]:
-            try:
-                self.config.update(dict(config[section]))
-            except KeyError:
-                pass
+        self.state = self.load_state(self.db_name) # Persistent state
+        self.config = utils.get_config(self.name) # Configuration
 
     def start(self):
         signal.signal(signal.SIGTERM, self.stop)
