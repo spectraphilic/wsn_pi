@@ -141,7 +141,7 @@ class MQ(object):
         if self.connection is not None:
             self.connection.close()
             if self.started:
-                self.connection.ioloop.start() # Graceful stop
+                self.connection.ioloop.stop() # Graceful stop
                 self.started = False
 
             self.connection = None
