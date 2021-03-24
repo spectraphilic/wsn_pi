@@ -35,7 +35,7 @@ programs = [
     {'name': 'wsn_raw_archive', 'priority': 2},
     {'name': 'wsn_raw_cook', 'priority': 2},
     {'name': 'wsn_data_archive', 'priority': 3},
-    {'name': 'wsn_data_cook', 'priority': 3},
+    {'name': 'wsn_data_django', 'priority': 3},
 ]
 
 
