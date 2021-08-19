@@ -9,11 +9,15 @@ SENSORS = {
     3: [('frame', 0)],
     210: [('bme_tc', -2), ('bme_hum', -2), ('bme_pres', 2)],
     211: [('mlx_object', -2), ('mlx_ambient', -2)],
+    212: [('tmp_temperature', -2)],
+    #213: [('vl_distance', 0)],
     219: [('sht_tc', -2), ('sht_hum', -2)],
     220: [('channel_f1', 0), ('channel_f2', 0), ('channel_f3', 0),
           ('channel_f4', 0), ('channel_f5', 0), ('channel_f6', 0),
           ('channel_f7', 0), ('channel_f8', 0), ('channel_clear', 0),
           ('channel_nir', 0)],
+    222: [('vcnl_prox', 0), ('vcnl_lux', 0), ('vcnl_white', 0)],
+    223: [('veml_lux', -2), ('veml_white', -2), ('veml_als', 0)],
 }
 
 
