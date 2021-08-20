@@ -30,30 +30,30 @@ class Parser:
     def __init__(self, data):
         self.data = bytes.fromhex(data)
         self.size = len(self.data)
+        self.__idx = 0
 
     def get_frame(self):
         data = cbor2.loads(self.data)
-        n = len(data)
+        data = iter(data)
 
         frame = {}
-        i = 0
-        while i < n:
-            key = data[i]
-            i += 1
+        while True:
+            try:
+                key = next(data)
+            except StopIteration:
+                break
+
             for field in SENSORS[key]:
                 field = Field(*field)
                 if field.n == 1:
-                    value = data[i]
-                    i += 1
+                    value = next(data)
                     frame[field.name] = value * (10 ** field.scale)
                 elif field.n == 0:  # Variable number of values
-                    frame[field.name] = []
-                    value = data[i]
-                    i += 1
-                    for j in range(value):
-                        value = data[i]
-                        i += 1
-                        frame[field.name].append(value * (10 ** field.scale))
+                    n = next(data)
+                    values = [next(data)]
+                    for j in range(1, n):
+                        values.append(values[-1] + next(data))
+                    frame[field.name] = [x * (10 ** field.scale) for x in values]
                 else:
                     raise NotImplementedError()
 
