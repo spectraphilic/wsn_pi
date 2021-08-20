@@ -1,6 +1,10 @@
 import cbor2
+import collections
 import pprint
+import sys
 
+
+Field = collections.namedtuple('Field', ['name', 'scale', 'n'], defaults=[0, 1])
 
 SENSORS = {
     0: [('tst', 0)],
@@ -10,7 +14,7 @@ SENSORS = {
     210: [('bme_tc', -2), ('bme_hum', -2), ('bme_pres', 2)],
     211: [('mlx_object', -2), ('mlx_ambient', -2)],
     212: [('tmp_temperature', -2)],
-    #213: [('vl_distance', 0)],
+    213: [('vl_distance', 0, 0)],
     219: [('sht_tc', -2), ('sht_hum', -2)],
     220: [('channel_f1', 0), ('channel_f2', 0), ('channel_f3', 0),
           ('channel_f4', 0), ('channel_f5', 0), ('channel_f6', 0),
@@ -21,25 +25,51 @@ SENSORS = {
 }
 
 
-def parse_frame(data):
-    data = cbor2.loads(data)
-    n = len(data)
+class Parser:
 
-    frame = {}
-    i = 0
-    while i < n:
-        key = data[i]
-        i += 1
-        for name, scale in SENSORS[key]:
-            value = data[i]
+    def __init__(self, data):
+        self.data = bytes.fromhex(data)
+        self.size = len(self.data)
+
+    def get_frame(self):
+        data = cbor2.loads(self.data)
+        n = len(data)
+
+        frame = {}
+        i = 0
+        while i < n:
+            key = data[i]
             i += 1
-            frame[name] = value * (10 ** scale)
+            for field in SENSORS[key]:
+                field = Field(*field)
+                if field.n == 1:
+                    value = data[i]
+                    i += 1
+                    frame[field.name] = value * (10 ** field.scale)
+                elif field.n == 0:  # Variable number of values
+                    frame[field.name] = []
+                    value = data[i]
+                    i += 1
+                    for j in range(value):
+                        value = data[i]
+                        i += 1
+                        frame[field.name].append(value * (10 ** field.scale))
+                else:
+                    raise NotImplementedError()
 
-    return frame
+        return frame
 
 
 if __name__ == '__main__':
-    data = '9f001a611d2a3b011b004b12002e1540190260030318dc0405080a186c18480c0d131518d219091c19182419037b18d319095f19096318db19096c19196fff'
-    data = bytes.fromhex(data)
-    frame = parse_frame(data)
+    if len(sys.argv) > 1:
+        data = sys.argv[1]
+    else:
+        data = '9f001a611f6e3f011b004b12002e1540190260030018dc1416181f182319010b18ff182d' \
+               '18351848185718d21908cd1915f619037c18d31908dd1908ff18db19092119175218d419' \
+               '092618de01189419017f18df194a29390725190ce018d50f190566190566190566190566' \
+               '190566190566190566190566190566190566190566190566190566190566190566ff'
+
+    parser = Parser(data)
+    print('Frame size = ', parser.size)
+    frame = parser.get_frame()
     pprint.pprint(frame)
