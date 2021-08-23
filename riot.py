@@ -11,7 +11,7 @@ SENSORS = {
     1: [('serial', 0)],
     2: [('name', 0)],
     3: [('frame', 0)],
-    210: [('bme_tc', -2), ('bme_hum', -2), ('bme_pres', 2)],
+    210: [('bme_tc', -2), ('bme_hum', -2), ('bme_pres', 0)],
     211: [('mlx_object', -2), ('mlx_ambient', -2)],
     212: [('tmp_temperature', -2)],
     213: [('vl_distance', 0, 0)],
@@ -20,6 +20,10 @@ SENSORS = {
           ('channel_f4', 0), ('channel_f5', 0), ('channel_f6', 0),
           ('channel_f7', 0), ('channel_f8', 0), ('channel_clear', 0),
           ('channel_nir', 0)],
+#   221: [('icm_temp', -2),
+#         ('icm_acc_x', -2), ('icm_acc_y', -2), ('icm_acc_z', -2),
+#         ('icm_mag_x', -2), ('icm_mag_y', -2), ('icm_mag_z', -2),
+#         ('icm_gyro_x', -2), ('icm_gyro_y', -2), ('icm_gyro_z', -2)],
     222: [('vcnl_prox', 0), ('vcnl_lux', 0), ('vcnl_white', 0)],
     223: [('veml_lux', -2), ('veml_white', -2), ('veml_als', 0)],
 }
@@ -64,12 +68,12 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         data = sys.argv[1]
     else:
-        data = '9f001a611f6e3f011b004b12002e1540190260030018dc1416181f182319010b18ff182d' \
-               '18351848185718d21908cd1915f619037c18d31908dd1908ff18db19092119175218d419' \
-               '092618de01189419017f18df194a29390725190ce018d50f190566190566190566190566' \
-               '190566190566190566190566190566190566190566190566190566190566190566ff'
+        data = '9f001a6123639b011b004b12002e1540190260030018dc17181f18291830190140190102' \
+               '183e18491863187b18d21909501911e01a00015d9d18d319095f19099718db19099e1913' \
+               '6d18d419099f18de0118a019017918df192eb01995b719081b18d50f1905540000000000' \
+               '000000000000000000ff'
 
     parser = Parser(data)
-    print('Frame size = ', parser.size)
+    print(f'Frame size = {parser.size}')
     frame = parser.get_frame()
     pprint.pprint(frame)
