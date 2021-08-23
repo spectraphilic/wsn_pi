@@ -7,10 +7,10 @@ import sys
 Field = collections.namedtuple('Field', ['name', 'scale', 'n'], defaults=[0, 1])
 
 SENSORS = {
-    0: [('tst', 0)],
-    1: [('serial', 0)],
-    2: [('name', 0)],
-    3: [('frame', 0)],
+    0: [('tst', None)],
+    1: [('serial', None)],
+    2: [('name', None)],
+    3: [('frame', None)],
     210: [('bme_tc', -2), ('bme_hum', -2), ('bme_pres', 0)],
     211: [('mlx_object', -2), ('mlx_ambient', -2)],
     212: [('tmp_temperature', -2)],
@@ -38,7 +38,10 @@ class Parser:
 
     def get_frame(self):
         data = cbor2.loads(self.data)
+        #pprint.pprint(data)
         data = iter(data)
+
+        get_value = lambda value, scale: value / (10 ** -scale) if scale else value
 
         frame = {}
         while True:
@@ -51,13 +54,13 @@ class Parser:
                 field = Field(*field)
                 if field.n == 1:
                     value = next(data)
-                    frame[field.name] = value * (10 ** field.scale)
+                    frame[field.name] = get_value(value, field.scale)
                 elif field.n == 0:  # Variable number of values
                     n = next(data)
                     values = [next(data)]
                     for j in range(1, n):
                         values.append(values[-1] + next(data))
-                    frame[field.name] = [x * (10 ** field.scale) for x in values]
+                    frame[field.name] = [get_value(x, field.scale) for x in values]
                 else:
                     raise NotImplementedError()
 
