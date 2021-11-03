@@ -3,4 +3,4 @@ install:
 	./venv/bin/pip install -r requirements.txt
 	mkdir -p log
 	mkdir -p var
-	python3 supervisor.py > supervisor.conf
+	./venv/bin/python supervisor.py > supervisor.conf
