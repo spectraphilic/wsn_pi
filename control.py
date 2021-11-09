@@ -78,7 +78,7 @@ def tx(device, remote, data, frame_ids={}):
     frame_id = bytearray([frame_id])
 
     # Send AT command
-    device.send_data_async(remote, data, 0)
+    utils.send_data_async(device, remote, data)
 
     #device.tx(dest_addr=address, data=data, frame_id=frame_id)
     return frame_id
