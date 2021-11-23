@@ -32,7 +32,10 @@ SENSORS = {
 class Parser:
 
     def __init__(self, data):
-        self.data = bytes.fromhex(data)
+        if type(data) is str:
+            data = bytes.fromhex(data)
+
+        self.data = data
         self.size = len(self.data)
         self.__idx = 0
 
@@ -65,6 +68,10 @@ class Parser:
                     raise NotImplementedError()
 
         return frame
+
+
+def parse_frame(data):
+    return Parser(data).get_frame()
 
 
 if __name__ == '__main__':

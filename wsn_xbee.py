@@ -25,7 +25,7 @@ class Publisher(MQ):
         self.info('RCV %s', data)
         if data == b'ping':
             self.info('> ping')
-            msg = "pong %s" % int(time.time())
+            msg = "time %s" % int(time.time())
             device.send_data_broadcast(msg)
             self.info("< %s", msg)
             return
@@ -46,7 +46,7 @@ class Publisher(MQ):
         frame = {
             'id': 'rx', # XXX remote_at_response, tx_status
             'source_addr': address,
-            'data': base64.b64encode(message.data).decode(),
+            'data': data,
             'received': int(message.timestamp),
         }
         self.publish(frame)
