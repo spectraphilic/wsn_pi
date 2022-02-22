@@ -1,6 +1,7 @@
 # Standard library
 import contextlib
 import threading
+import time
 
 # Requirements
 from rak811.rak811_v3 import Rak811
@@ -36,13 +37,15 @@ def open_lora():
 
 def lora_recv(lora):
     while lora.nb_downlinks > 0:
-        print('GOT MESSAGE...')
-        message = lora.get_downlink()
-        data = message['data']
-        data = int.from_bytes(data, byteorder='big')
-        print(f'Received message: {data}')
-        print(f'RSSI: {message["rssi"]}, SNR: {message["snr"]}')
-        yield data
+        message = lora.get_downlink()  # keys: data, len, port, rssi, snr
+        received = int(time.time())
+        print(f'Received message len={message["len"]} rssi={message["rssi"]} snr={message["snr"]}')
+        yield {
+            'id': 'rx',
+            'source_address': '0', # FIXME
+            'data': message['data'],
+            'received': received,
+        }
 
 
 def lora_send(lora, message):
@@ -56,10 +59,8 @@ def loop(lora, publisher):
         lora.set_config('lorap2p:transfer_mode:1')
         wait_time = 60
         lora.receive_p2p(wait_time)
-        for data in lora_recv(lora):
-            publisher.publish({
-                'data': data,
-            })
+        for msg in lora_recv(lora):
+            publisher.publish(msg)
 
 
 class Publisher(MQ):
