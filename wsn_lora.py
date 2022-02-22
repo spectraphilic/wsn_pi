@@ -64,6 +64,7 @@ def loop(lora, publisher):
         lora.receive_p2p(wait_time)
         for msg in lora_recv(lora):
             publisher.publish(msg)
+            lora_send(lora, 'ack')
 
 
 class Publisher(MQ):
