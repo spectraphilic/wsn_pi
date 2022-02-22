@@ -1,4 +1,5 @@
 # Standard library
+import base64
 import contextlib
 import threading
 import time
@@ -40,10 +41,12 @@ def lora_recv(lora):
         message = lora.get_downlink()  # keys: data, len, port, rssi, snr
         received = int(time.time())
         print(f'Received message len={message["len"]} rssi={message["rssi"]} snr={message["snr"]}')
+        data = message['data']
+        data = base64.b64encode(data).decode()
         yield {
             'id': 'rx',
-            'source_address': '0', # FIXME
-            'data': message['data'],
+            'source_addr': '0', # FIXME
+            'data': data,
             'received': received,
         }
 
