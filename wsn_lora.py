@@ -1,5 +1,6 @@
 # Standard library
-from contextlib import contextmanager
+import contextlib
+import threading
 
 # Requirements
 from rak811.rak811_v3 import Rak811
@@ -16,12 +17,11 @@ cr = 1  # coding rate (1 = 4/5)
 pre = 8
 pwr = 16
 
-@contextmanager
+@contextlib.contextmanager
 def open_lora():
     print('Initializing RAK811 module...')
     lora = Rak811()
     try:
-        lora = Rak811()
         response = lora.set_config('lora:work_mode:1')
         for r in response:
             print(r)
@@ -55,7 +55,8 @@ def loop(lora, publisher):
         # Receive mode
         lora.set_config('lorap2p:transfer_mode:1')
         wait_time = 60
-        for data in lora.receive_p2p(wait_time):
+        lora.receive_p2p(wait_time)
+        for data in lora_recv(lora):
             publisher.publish({
                 'data': data,
             })
@@ -76,7 +77,6 @@ class Publisher(MQ):
 if __name__ == '__main__':
     with Publisher() as publisher:
         with open_lora() as lora:
-            #device.add_data_received_callback(publisher.lora_cb)
-            #publisher.start()
-
-            loop()
+            thread = threading.Thread(target=loop, args=(lora, publisher))
+            thread.start()
+            publisher.start()
