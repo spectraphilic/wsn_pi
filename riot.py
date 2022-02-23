@@ -7,10 +7,12 @@ import sys
 Field = collections.namedtuple('Field', ['name', 'scale', 'n'], defaults=[0, 1])
 
 SENSORS = {
-    0: [('tst', None)],
-    1: [('serial', None)],
-    2: [('name', None)],
-    3: [('frame', None)],
+    0: [('source_addr', None)],
+    1: [('target_addr', None)],
+    2: [('serial', None)],
+    3: [('name', None)],
+    4: [('frame', None)],
+    123: [('tst', None)],
     210: [('bme_tc', -2), ('bme_hum', -2), ('bme_pres', 0)],
     211: [('mlx_object', -2), ('mlx_ambient', -2)],
     212: [('tmp_temperature', -2)],
