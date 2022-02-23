@@ -30,6 +30,7 @@ defaults = {
 }
 
 programs = [
+    {'name': 'wsn_lora', 'priority': 1},
     {'name': 'wsn_usb', 'priority': 1},
     {'name': 'wsn_xbee', 'priority': 1},
     {'name': 'wsn_raw_archive', 'priority': 2},
@@ -42,7 +43,8 @@ programs = [
 if __name__ == '__main__':
     for program in programs:
         config = utils.get_config(program['name'])
-        data = defaults.copy()
-        data.update(program)
-        data.update(config)
-        print(template.format(**data))
+        if config is not None:
+            data = defaults.copy()
+            data.update(program)
+            data.update(config)
+            print(template.format(**data))

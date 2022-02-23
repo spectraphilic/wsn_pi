@@ -1,0 +1,16 @@
+[global]
+autostart = true
+log_level = info
+
+[wsn_lora]
+
+[wsn_raw_archive]
+
+[wsn_raw_cook]
+format = riot
+
+[wsn_data_archive]
+
+[wsn_data_django]
+url = https://wsn.latice.eu/api/create/
+token =

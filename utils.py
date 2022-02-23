@@ -2,17 +2,23 @@ from configparser import RawConfigParser as ConfigParser
 from digi.xbee import devices
 
 
+def get_section(config_parser, name, default=None):
+    try:
+        return dict(config_parser[name])
+    except KeyError:
+        return None
+
+
 def get_config(name):
     config_parser = ConfigParser()
     config_parser.read('config.ini')
 
-    config = {}
-    for section in ['global', name]:
-        try:
-            config.update(dict(config_parser[section]))
-        except KeyError:
-            pass
+    section_conf = get_section(config_parser, name)
+    if section_conf is None:
+        return None
 
+    config = get_section(config_parser, 'global', default={})
+    config.update(section_conf)
     return config
 
 

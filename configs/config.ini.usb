@@ -1,0 +1,13 @@
+[global]
+autostart = true
+log_level = info
+
+[wsn_usb]
+port = /dev/ttyUSB0
+bauds = 115200
+
+[wsn_data_archive]
+
+[wsn_data_django]
+url = https://wsn.latice.eu/api/create/
+token =

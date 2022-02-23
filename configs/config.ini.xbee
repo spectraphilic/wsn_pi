@@ -2,11 +2,6 @@
 autostart = true
 log_level = info
 
-[wsn_usb]
-autostart = false
-port = /dev/ttyUSB0
-bauds = 115200
-
 [wsn_xbee]
 port = /dev/serial0
 bauds = 9600
@@ -16,8 +11,9 @@ device = digimesh
 
 [wsn_raw_cook]
 format = waspmote
-key = 0123456789012345
+
+[wsn_data_archive]
 
 [wsn_data_django]
 url = https://wsn.latice.eu/api/create/
-token = 
+token =

@@ -4,7 +4,7 @@
 /log/
 /supervisor.conf
 /var/
-/venv/
+/venv*/
 
 .*.swp
 *.pyc
