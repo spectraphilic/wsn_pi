@@ -43,7 +43,7 @@ def lora_recv(lora, publisher):
         received = int(time.time())
         print(f'Received message len={message["len"]} rssi={message["rssi"]} snr={message["snr"]}')
         data = message['data']
-        data = base64.b64encode(data).decode()
+        data_str = base64.b64encode(data).decode()
 
         # Extract source address from data
         try:
@@ -53,13 +53,13 @@ def lora_recv(lora, publisher):
             assert type(source_addr) is int and 2 <= source_addr <= 255
             source_addr = str(source_addr)
         except Exception:
-            publisher.error('Failed to load CBOR data or read source address')
+            publisher.error('Failed to load CBOR data or read source address from {data_str}')
             continue
 
         yield {
             'id': 'rx',
             'source_addr': source_addr,
-            'data': data,
+            'data': data_str,
             'received': received,
         }
 
