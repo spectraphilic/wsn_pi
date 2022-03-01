@@ -1,8 +1,5 @@
-[global]
-autostart = true
-log_level = info
-
 [wsn_lora]
+log_level = info
 
 [wsn_raw_archive]
 

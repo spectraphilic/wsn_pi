@@ -1,11 +1,8 @@
-[global]
-autostart = true
-log_level = info
-
 [wsn_xbee]
 port = /dev/serial0
 bauds = 9600
 device = digimesh
+log_level = info
 
 [wsn_raw_archive]
 

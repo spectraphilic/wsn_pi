@@ -12,14 +12,7 @@ def get_section(config_parser, name, default=None):
 def get_config(name):
     config_parser = ConfigParser()
     config_parser.read('config.ini')
-
-    section_conf = get_section(config_parser, name)
-    if section_conf is None:
-        return None
-
-    config = get_section(config_parser, 'global', default={})
-    config.update(section_conf)
-    return config
+    return get_section(config_parser, name)
 
 
 def get_device(config):
@@ -59,11 +52,11 @@ def send_data_async(device, remote, data):
         raise ValueError(f'Unexpected address type {type(address)}')
 
     # Zigbee
-    if isinstance(device, devices.DigiMeshDevice):
-        raise NotImplementedError('Zigbee devices not yet supported')
+    if isinstance(device, devices.ZigBeeDevice):
+        return device.send_data_async(remote, data, 0)
 
     # XBee
-    if isinstance(device, devices.ZigBeeDevice):
+    if isinstance(device, devices.DigiMeshDevice):
         return device.send_data_async(remote, data, 0)
 
     raise TypeError(f'Unexpected device type {type(device)}')

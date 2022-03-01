@@ -1,6 +1,7 @@
 # Standard Library
 import getpass
 import os
+import sys
 
 # Project
 import utils
@@ -14,7 +15,7 @@ user = getpass.getuser()
 # times.
 
 template = f"""[program:{{name}}]
-command={cwd}/venv/bin/python %(program_name)s.py
+command={sys.executable} %(program_name)s.py
 directory={cwd}
 user={user}
 autostart={{autostart}}
@@ -41,6 +42,15 @@ programs = [
 
 
 if __name__ == '__main__':
+    # Required sections
+    for name in 'supervisord', 'supervisorctl':
+        print(f'[{name}]')
+        config = utils.get_config(name) or {}
+        for key, value in config.items():
+            print(f'{key} = {value}')
+        print()
+
+    # Programs
     for program in programs:
         config = utils.get_config(program['name'])
         if config is not None:

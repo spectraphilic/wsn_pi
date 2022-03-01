@@ -1,6 +1,8 @@
 Install
 =======
 
+Python 3.7 or later is required.
+
 Install system wide requirements::
 
   $ sudo apt install python3-venv rabbitmq-server supervisor

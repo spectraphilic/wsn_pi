@@ -3,6 +3,6 @@ digi-xbee==1.3.0
 pika==1.2.0
 pycryptodome==3.14.1
 pyserial==3.5
-rak811==0.8.4
+rak811==0.8.5
 requests==2.26.0
 RPi.GPIO==0.7.1
