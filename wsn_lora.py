@@ -42,16 +42,29 @@ def open_lora(config):
         lora.close()
 
 
-Package = collections.namedtuple('Package', ['dst', 'src', 'packnum', 'payload', 'retry'])
+
+class Package(collections.namedtuple('Package', ['dst', 'src', 'packnum', 'length', 'payload', 'retry'])):
+
+    def to_bytes(self):
+        data = (
+            self.dst.to_bytes(1, 'little')
+            + self.src.to_bytes(1, 'little')
+            + self.packnum.to_bytes(1, 'little')
+            + self.length.to_bytes(1, 'little')
+            + self.payload
+            + self.retry.to_bytes(1, 'little')
+        )
+        return data
+
 def parse_waspmote(data):
     dst = data[0]
     src = data[1]
     packnum = data[2]
     length = data[3]
-    assert length == len(data)
     payload = data[4:-1]
     retry = data[-1]
-    return Package(dst, src, packnum, payload, retry)
+    assert length == len(data)
+    return Package(dst, src, packnum, length, payload, retry)
 
 
 def parse_cbor2(data):
@@ -70,6 +83,7 @@ def lora_recv(lora, publisher):
     }
     fmt = publisher.config.get('format', 'waspmote')
     parse = parsers[publisher.config.get('format', 'waspmote')]
+    address = int(publisher.config.get('address', 1))
 
     while lora.nb_downlinks > 0:
         message = lora.get_downlink()  # keys: data, len, port, rssi, snr
@@ -85,7 +99,17 @@ def lora_recv(lora, publisher):
             publisher.error(f'Failed to load {fmt} data from {data_str}')
             continue
 
-        # TODO Filter packets not send to me or to broadcast??
+        # Filter packets not send to me or to broadcast
+        if pkg.dst != address and pkg.dst != 0:
+            publisher.info(f'Skip package addressed to {pkg.dst}')
+            continue
+
+        if pkg.payload == b'ping':
+            # Reply ACK
+            ack = Package(pkg.src, address, pkg.packnum, 0, b'\x00', 0)
+            lora_send(ack.to_bytes())
+            lora.set_config('lorap2p:transfer_mode:1')
+            continue
 
         yield {
             'id': 'rx',
@@ -95,10 +119,13 @@ def lora_recv(lora, publisher):
         }
 
 
-def lora_send(lora, message):
+def lora_send(lora, data):
     lora.set_config('lorap2p:transfer_mode:2')
-    message = cbor2.dumps(message)
-    lora.send_p2p(message)
+    lora.send_p2p(data)
+
+def lora_send_cbor2(lora, message):
+    data = cbor2.dumps(message)
+    lora_send(data)
 
 
 def loop(lora, publisher):
@@ -115,8 +142,9 @@ def loop(lora, publisher):
         for msg in lora_recv(lora, publisher):
             publisher.publish(msg)
             # Send ack
+            # FIXME This doesn't work with the waspmote
             target = int(msg['source_addr'])
-            lora_send(lora, [
+            lora_send_cbor2(lora, [
                 1,          # Source address (gateway)
                 target,     # Target address
                 'ack',      # Command

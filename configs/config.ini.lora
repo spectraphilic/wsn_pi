@@ -2,11 +2,12 @@
 khz = 868300
 bw = 0
 sf = 7
+address = 1
 
 [wsn_raw_archive]
 
 [wsn_raw_cook]
-format = riot
+format = waspmote
 
 [wsn_data_archive]
 

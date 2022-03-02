@@ -1,7 +1,10 @@
-import cbor2
+# Standard library
 import collections
 import pprint
 import sys
+
+# Requirements
+import cbor2
 
 
 Field = collections.namedtuple('Field', ['name', 'scale', 'n'], defaults=[0, 1])
