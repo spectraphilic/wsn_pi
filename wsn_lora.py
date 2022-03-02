@@ -1,12 +1,16 @@
 # Standard library
 import base64
+import collections
 import contextlib
 import threading
 import time
 
 # Requirements
 import cbor2
-from rak811.rak811_v3 import Rak811, Rak811ResponseError
+try:
+    from rak811.rak811_v3 import Rak811, Rak811ResponseError
+except RuntimeError:
+    pass
 
 # Project
 from mq import MQ
@@ -38,28 +42,54 @@ def open_lora(config):
         lora.close()
 
 
+Package = collections.namedtuple('Package', ['dst', 'src', 'packnum', 'payload', 'retry'])
+def parse_waspmote(data):
+    dst = data[0]
+    src = data[1]
+    packnum = data[2]
+    length = data[3]
+    assert length == len(data)
+    payload = data[4:-1]
+    retry = data[-1]
+    return Package(dst, src, packnum, payload, retry)
+
+
+def parse_cbor2(data):
+    array = cbor2.loads(data)
+    assert type(array) is list and len(array) >= 2 and array[0] == 0
+    src = array[1]
+    assert type(src) is int and 2 <= src <= 255
+    dst = array[3]
+    return Package(dst, src, 0, data, 0)
+
+
 def lora_recv(lora, publisher):
+    parsers = {
+        'waspmote': parse_waspmote,
+        'riot': parse_cbor2,
+    }
+    fmt = publisher.config.get('format', 'waspmote')
+    parse = parsers[publisher.config.get('format', 'waspmote')]
+
     while lora.nb_downlinks > 0:
         message = lora.get_downlink()  # keys: data, len, port, rssi, snr
         received = int(time.time())
-        print(f'Received message len={message["len"]} rssi={message["rssi"]} snr={message["snr"]}')
+        publisher.info(f'Received message len={message["len"]} rssi={message["rssi"]} snr={message["snr"]}')
         data = message['data']
         data_str = base64.b64encode(data).decode()
 
         # Extract source address from data
         try:
-            array = cbor2.loads(data)
-            assert type(array) is list and len(array) >= 2 and array[0] == 0
-            source_addr = array[1]
-            assert type(source_addr) is int and 2 <= source_addr <= 255
-            source_addr = str(source_addr)
+            pkg = parse(data)
         except Exception:
-            publisher.error('Failed to load CBOR data or read source address from {data_str}')
+            publisher.error(f'Failed to load {fmt} data from {data_str}')
             continue
+
+        # TODO Filter packets not send to me or to broadcast??
 
         yield {
             'id': 'rx',
-            'source_addr': source_addr,
+            'source_addr': str(pkg.src),
             'data': data_str,
             'received': received,
         }
