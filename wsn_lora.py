@@ -12,25 +12,26 @@ from rak811.rak811_v3 import Rak811, Rak811ResponseError
 from mq import MQ
 
 
-# Use RIOT defaults for frequency and sf/bw/cr
-freq = 868.300
-sf = 7  # spreading factor
-bw = 0  # bandwith (0 = 125KHz)
-cr = 1  # coding rate (1 = 4/5)
-pre = 8
-pwr = 16
-
 @contextlib.contextmanager
-def open_lora():
+def open_lora(config):
     print('Initializing RAK811 module...')
+
+    # Use RIOT defaults for frequency and sf/bw/cr
+    freq = int(config.get('khz', 868300)) * 1000
+    sf = config.get('sf', 7) # spreading factor
+    bw = config.get('bw', 0) # bandwith (0 = 125KHz)
+    cr = 1                   # coding rate (1 = 4/5)
+    pre = 8
+    pwr = 16
+
     lora = Rak811()
     try:
         response = lora.set_config('lora:work_mode:1')
         for r in response:
             print(r)
 
-        config = f'lorap2p:{int(freq*1000*1000)}:{sf}:{bw}:{cr}:{pre}:{pwr}'
-        lora.set_config(config)
+        lora_config = f'lorap2p:{freq}:{sf}:{bw}:{cr}:{pre}:{pwr}'
+        lora.set_config(lora_config)
 
         yield lora
     finally:
@@ -106,7 +107,7 @@ class Publisher(MQ):
 
 if __name__ == '__main__':
     with Publisher() as publisher:
-        with open_lora() as lora:
+        with open_lora(publisher.config) as lora:
             thread = threading.Thread(target=loop, args=(lora, publisher))
             thread.start()
             publisher.start()

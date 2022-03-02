@@ -1,5 +1,7 @@
 [wsn_lora]
-log_level = info
+khz = 868300
+bw = 0
+sf = 7
 
 [wsn_raw_archive]
 
