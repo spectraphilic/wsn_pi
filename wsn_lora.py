@@ -36,6 +36,7 @@ class LoRa:
         self.__lora = None
         self.__address = int(publisher.config.get('address', 1))
         self.__format = publisher.config.get('format', 'waspmote')
+        self.__packnum = 0
 
     def __enter__(self):
         print('Initializing RAK811 module...')
@@ -58,11 +59,14 @@ class LoRa:
         self.__lora.set_config(lora_config)
         return self
 
-    def __exit__(self):
+    def __exit__(self, type, value, traceback):
         self.__lora.close()
 
-    def __build_pkg(self, dst, payload, packnum=0, length=None):
+    def __build_pkg(self, dst, payload, packnum=None, length=None):
         assert type(payload) is bytes
+        if packnum is None:
+            packnum = self.__packnum
+            self.__packnum = (packnum + 1) % 256
         if length is None:
             length = 5 + len(payload)
 
@@ -93,7 +97,7 @@ class LoRa:
             dst = array[3]
             return Package(dst, src, 0, data, 0)
 
-    def send(self, dst, payload, packnum=0, length=None):
+    def send(self, dst, payload, packnum=None, length=None):
         assert type(payload) is bytes
         if self.__format == 'waspmote':
             data = self.__build_pkg(dst, payload, packnum=packnum, length=length)
