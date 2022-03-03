@@ -64,6 +64,7 @@ class LoRa:
 
     def __build_pkg(self, dst, payload, packnum=None, length=None):
         assert type(payload) is bytes
+        assert len(payload) <= 250
         if packnum is None:
             packnum = self.__packnum
             self.__packnum = (packnum + 1) % 256
@@ -71,7 +72,7 @@ class LoRa:
             length = 5 + len(payload)
 
         retry = 0
-        pkg = Package(dst, self.__address, packnum, 0, payload, retry)
+        pkg = Package(dst, self.__address, packnum, length, payload, retry)
         return pkg.to_bytes()
 
     def __send(self, data):
@@ -105,6 +106,8 @@ class LoRa:
             payload = [self.__address, dst, payload]
             data = cbor2.dumps(payload)
 
+        assert type(data) is bytes
+        assert len(data) <= 255
         self.__send(data)
 
     def send_cbor2(self, message):

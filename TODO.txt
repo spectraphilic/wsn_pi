@@ -1,8 +1,8 @@
 LoRa:
 
-- Send acks to frames
-
 - Use waspmote pkg format for Riot as well, for compatibility
+
+- Test for robustness
 
 Other:
 
