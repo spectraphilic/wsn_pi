@@ -1,12 +1,14 @@
+LoRa:
+
+- Send acks to frames
+
+- Use waspmote pkg format for Riot as well, for compatibility
+
+Other:
+
 - Finish the control cli, so we can reconfigure the remote motes from the Pi.
 
 - Add unit tests, documentation, review.
 
 - Upload files to the server in batches, maybe through RabbitMQ, so the files
   are stored in the server's filesystem, not just in the database.
-
-- We use https://pypi.org/project/XBee/ ; consider using the new and official
-  https://pypi.org/project/digi-xbee/
-
-  List of frame types (not all supported by XBee),
-  https://www.digi.com/resources/documentation/Digidocs/90001496/reference/r_supported_frames_digimesh_900hp.htm?TocPath=XBee%20API%20mode%7C_____3

@@ -42,7 +42,6 @@ def open_lora(config):
         lora.close()
 
 
-
 class Package(collections.namedtuple('Package', ['dst', 'src', 'packnum', 'length', 'payload', 'retry'])):
 
     def to_bytes(self):
@@ -107,7 +106,8 @@ def lora_recv(lora, publisher):
         if pkg.payload == b'ping':
             # Reply ACK
             ack = Package(pkg.src, address, pkg.packnum, 0, b'\x00', 0)
-            lora_send(ack.to_bytes())
+            ack = ack.to_bytes()
+            lora_send(lora, ack)
             lora.set_config('lorap2p:transfer_mode:1')
             continue
 
