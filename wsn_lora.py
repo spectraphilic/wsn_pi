@@ -7,7 +7,7 @@ import time
 # Requirements
 import cbor2
 try:
-    from rak811.rak811_v3 import Rak811, Rak811ResponseError
+    from rak811.rak811_v3 import Rak811
 except RuntimeError:
     pass
 
@@ -155,20 +155,18 @@ class LoRa:
         lora = self.__lora
         publisher = self.__publisher
 
+        wait_time = 60
         while True:
-            # Receive mode
-            lora.set_config('lorap2p:transfer_mode:1')
-            wait_time = 60
             try:
+                lora.set_config('lorap2p:transfer_mode:1') # Receive mode
                 lora.receive_p2p(wait_time)
-            except Rak811ResponseError as exc:
-                publisher.warning(str(exc))
-                continue
+                for msg in self.recv():
+                    publisher.publish(msg)
+                    dst = int(msg['source_addr'])
+                    self.send(dst, b'ack')
 
-            for msg in self.recv():
-                publisher.publish(msg)
-                dst = int(msg['source_addr'])
-                self.send(dst, b'ack')
+            except Exception as exc:
+                publisher.warning(str(exc))
 
 
 class Publisher(MQ):
