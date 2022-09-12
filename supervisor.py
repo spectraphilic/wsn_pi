@@ -1,10 +1,8 @@
 # Standard Library
+from configparser import RawConfigParser as ConfigParser
 import getpass
 import os
 import sys
-
-# Project
-import utils
 
 
 cwd = os.getcwd()
@@ -30,31 +28,31 @@ defaults = {
     'autostart': 'true',
 }
 
-programs = [
-    {'name': 'wsn_lora', 'priority': 1},
-    {'name': 'wsn_usb', 'priority': 1},
-    {'name': 'wsn_xbee', 'priority': 1},
-    {'name': 'wsn_raw_archive', 'priority': 2},
-    {'name': 'wsn_raw_cook', 'priority': 2},
-    {'name': 'wsn_data_archive', 'priority': 3},
-    {'name': 'wsn_data_django', 'priority': 3},
-]
+programs = {
+    'wsn_lora': {'priority': 1},
+    'wsn_usb': {'priority': 1},
+    'wsn_xbee': {'priority': 1},
+    'wsn_raw_archive': {'priority': 2},
+    'wsn_raw_cook': {'priority': 2},
+    'wsn_data_archive': {'priority': 3},
+    'wsn_data_django': {'priority': 3},
+}
 
 
 if __name__ == '__main__':
-    # Required sections
-    for name in 'supervisord', 'supervisorctl':
-        print(f'[{name}]')
-        config = utils.get_config(name) or {}
-        for key, value in config.items():
-            print(f'{key} = {value}')
-        print()
+    config_parser = ConfigParser()
+    config_parser.read('config.ini')
 
-    # Programs
-    for program in programs:
-        config = utils.get_config(program['name'])
-        if config is not None:
+    for name in config_parser.sections():
+        section = dict(config_parser[name])
+        if name in programs:
             data = defaults.copy()
-            data.update(program)
-            data.update(config)
+            data['name'] = name
+            data.update(programs[name])
+            data.update(section)
             print(template.format(**data))
+        else:
+            print(f'[{name}]')
+            for key, value in section.items():
+                print(f'{key} = {value}')
+            print()
