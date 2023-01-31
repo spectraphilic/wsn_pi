@@ -1,4 +1,25 @@
-# Install
+# Hardware requirements
+
+Once the Raspberry Pi is installed, configure the system for the hardware as described
+below, depending on the network option used.
+
+## RAK811 (LoRa)
+
+The user that will be running the software must belong to the dialout and gpio groups.
+
+Run `raspi-config` and go to Interface Options, Serial Port:
+
+    Would you like a login shell be accessible over serial?
+    <No>
+
+    Would you like the serial port hardware to be enabled?
+    <Yes>
+
+Then reboot.
+
+For more information see https://github.com/AmedeeBulle/pyrak811
+
+# Install software
 
 Python 3.7 or later is required.
 
@@ -19,7 +40,8 @@ Copy a configuration file and edit it, for example:
     config_usb.ini
     config_xbee.ini
     $ cp configs/config_lora_waspmote.ini config.ini
-    $ nano config.ini
+
+Then edit `config.ini` as needed.
 
 Build:
 
@@ -31,6 +53,15 @@ Create a symbolic link, as root, to the supervisor configuration:
     $ sudo supervisorctl reread
     $ sudo supervisorctl update
 
+## RAK811 (LoRa)
+
+To get the firmware version:
+
+    $ source venv/bin/activate
+    $ rak811v3 hard-reset
+    $ rak811v3 version
+
+# RabbitMQ
 
 ## RabbitMQ: Plugins
 
@@ -93,7 +124,7 @@ Define a policy, and verify:
     # rabbitmqctl eval 'rabbit_federation_status:status().'
 
 
-## Supervisor
+# Supervisor
 
 The programs are managed by Supervisor, use ``supervisorctl`` to control them.
 Supervisor runs as root, so you will need to run ``supervisorctl`` as root, or
@@ -120,6 +151,6 @@ Enter the supervisorctl shell:
     meshpiuio@raspberrypi:~/github/wsn_pi $ sudo supervisorctl status
 
 
-## Algorithm structure
+# Algorithm structure
 
 ![](meshpi_frame_path.jpg)
