@@ -46,6 +46,7 @@ Then edit `config.ini` as needed.
 Build:
 
     $ make install
+    $ make etc
 
 Create a symbolic link, as root, to the supervisor configuration:
 
