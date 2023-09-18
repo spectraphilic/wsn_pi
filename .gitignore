@@ -1,8 +1,8 @@
 /__pycache__/
 /config.ini
 /data/
+/etc/
 /log/
-/supervisor.conf
 /var/
 /venv*/
 

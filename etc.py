@@ -12,7 +12,7 @@ user = getpass.getuser()
 # exits before supervisor will try to start it again up to <startretries>
 # times.
 
-template = f"""[program:{{name}}]
+supervisor_template = f"""[program:{{name}}]
 command={sys.executable} %(program_name)s.py
 directory={cwd}
 user={user}
@@ -38,11 +38,7 @@ programs = {
     'wsn_data_django': {'priority': 3},
 }
 
-
-if __name__ == '__main__':
-    config_parser = ConfigParser()
-    config_parser.read('config.ini')
-
+def write_supervisor(file):
     for name in config_parser.sections():
         section = dict(config_parser[name])
         if name in programs:
@@ -50,9 +46,38 @@ if __name__ == '__main__':
             data['name'] = name
             data.update(programs[name])
             data.update(section)
-            print(template.format(**data))
+            file.write(supervisor_template.format(**data))
+            file.write('\n')
         else:
-            print(f'[{name}]')
+            file.write(f'[{name}]\n')
             for key, value in section.items():
-                print(f'{key} = {value}')
-            print()
+                file.write(f'{key} = {value}\n')
+            file.write('\n')
+
+
+service_template = f"""[Unit]
+Description=WSN Pi
+After=rabbitmq-server.service
+Wants=rabbitmq-server.service
+
+[Service]
+ExecReload=/bin/kill -SIGHUP $MAINPID
+ExecStart={cwd}/venv/bin/supervisord -c {cwd}/etc/supervisor.conf -n
+KillSignal=TERM
+Restart=on-failure
+User={user}
+WorkingDirectory={cwd}
+
+[Install]
+WantedBy=multi-user.target
+"""
+
+if __name__ == '__main__':
+    config_parser = ConfigParser()
+    config_parser.read('config.ini')
+
+    with open('etc/supervisor.conf', 'w') as file:
+        write_supervisor(file)
+
+    with open('etc/wsn_pi.service', 'w') as file:
+        file.write(service_template)
