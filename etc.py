@@ -30,7 +30,6 @@ supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
 supervisor_program = f"""[program:{{name}}]
 command={sys.executable} %(program_name)s.py
 directory={cwd}
-user={user}
 autostart={{autostart}}
 startsecs=3
 startretries=20
