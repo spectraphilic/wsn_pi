@@ -4,10 +4,10 @@ CONFIG=var/supervisor.conf
 
 
 ctl:
-	supervisorctl -c ${CONFIG}
+	./venv/bin/supervisorctl -c ${CONFIG}
 
 start:
-	supervisord -c ${CONFIG} -n
+	./venv/bin/supervisord -c ${CONFIG} -n
 
 stop:
 	kill -TERM `cat var/run/supervisord.pid`
