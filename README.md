@@ -50,9 +50,10 @@ Build:
 
 Create a symbolic link, as root, to the supervisor configuration:
 
-    $ sudo cp etc/wsn_pi.service /etc/systemd/system/
-    $ sudo systemctl start wsn_pi.service
-    $ sudo systemctl enable wsn_pi.service
+    $ sudo cp $PWD/etc/wsn-pi.service /etc/systemd/system/
+    $ systemctl daemon-reload
+    $ sudo systemctl start wsn-pi.service
+    $ sudo systemctl enable wsn-pi.service
 
 ## RAK811 (LoRa)
 
