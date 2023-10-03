@@ -1,4 +1,3 @@
-# Standard library
 import base64
 import collections
 import threading
@@ -79,24 +78,37 @@ class LoRa:
         self.__lora.set_config('lorap2p:transfer_mode:2')
         self.__lora.send_p2p(data)
 
-    def __parse(self, data):
-        if self.__format == 'waspmote':
-            dst = data[0]
-            src = data[1]
-            packnum = data[2]
-            length = data[3]
-            payload = data[4:-1]
-            retry = data[-1]
-            assert length == len(data)
-            return Package(dst, src, packnum, length, payload, retry)
-        else:
-            # cbor2
-            array = cbor2.loads(data)
-            assert type(array) is list and len(array) >= 2 and array[0] == 0
-            src = array[1]
-            assert type(src) is int and 2 <= src <= 255
-            dst = array[3]
-            return Package(dst, src, 0, data, 0)
+    @staticmethod
+    def parse_waspmote(data):
+        """
+        The waspmote library (see "Waspmote LoRa Networking Guide") sends packets with the
+        following structure:
+
+        - dst (1 Byte)
+        - src (1 Byte)
+        - packnum (1 Byte)
+        - length (1 Byte)
+        - data (variable)
+        - retry (1 Byte)
+        """
+        dst = data[0]
+        src = data[1]
+        packnum = data[2]
+        length = data[3]
+        payload = data[4:-1]
+        retry = data[-1]
+        #print(f'DEBUG {dst=} {src=} {packnum=} {length=}, {retry=}')
+        assert length == len(data), f'Got {len(data)} bytes, expected {length}'
+        return Package(dst, src, packnum, length, payload, retry)
+
+    @staticmethod
+    def parse_cbor2(data):
+        array = cbor2.loads(data)
+        assert type(array) is list and len(array) >= 2 and array[0] == 0
+        src = array[1]
+        assert type(src) is int and 2 <= src <= 255
+        dst = array[3]
+        return Package(dst, src, 0, data, 0)
 
     def send(self, dst, payload, packnum=None, length=None):
         assert type(payload) is bytes
@@ -119,15 +131,26 @@ class LoRa:
         publisher = self.__publisher
 
         while lora.nb_downlinks > 0:
-            message = lora.get_downlink()  # keys: data, len, port, rssi, snr
+            message = lora.get_downlink()
             received = int(time.time())
-            publisher.info(f'Received message len={message["len"]} rssi={message["rssi"]} snr={message["snr"]}')
+
+            # Read from the serial device: at+recv=,<rssi>,<snr>,<len>[:<data>]
+            length = message['len']
+            rssi = message['rssi']
+            snr = message['snr']
             data = message['data']
-            data_str = base64.b64encode(data).decode()
+            publisher.info(f'Received message len={length} rssi={rssi} snr={snr}')
+            if length != len(data):
+                publisher.error(f'Data length is {len(data)}, should be {length}')
+                continue
 
             # Extract source address from data
+            data_str = base64.b64encode(data).decode()
             try:
-                pkg = self.__parse(data)
+                if self.__format == 'waspmote':
+                    pkg = self.parse_waspmote(data)
+                else:
+                    pkg = self.parse_cbor2(data)
             except Exception:
                 publisher.error(f'Failed to load {self.__format} data from {data_str}')
                 continue
